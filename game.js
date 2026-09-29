@@ -473,6 +473,15 @@ const EQUIPMENT_DATA = {
   }
 };
 
+const EQUIPMENT_PRICES = {
+  common: 40,
+  uncommon: 60,
+  rare: 80,
+  legendary: 110
+};
+const TAROT_PRICE = 30;
+const POTION_PRICE = 25;
+
 // ==========================================
 // 4. 몬스터 풀 (층별 난이도)
 // ==========================================
@@ -577,21 +586,25 @@ class DiceSpireGame {
     this.isPlayerTurn = true;
     this.isActionLocked = false;
 
-    // 소비 아이템: 타로 카드 2칸 인벤토리 (시작 시 1장 지급)
-    this.tarotInventory = [ { ...TAROT_CARDS.fool }, null ];
+    // 소비 아이템: 타로 카드 2칸 인벤토리 (상점에서 구매)
+    this.tarotInventory = [ null, null ];
     this.tarotBuffs = { attackMultiplier: 1 };
     this.enemyStunned = false;
 
-    // 장비(조커 시스템) 5칸: 투구, 무기 1, 무기 2, 갑옷, 하체
+    // 장비(조커 시스템) 5칸: 시작 시에는 장비가 모두 비어있음 (5라운드마다 상점에서 구매)
     this.equipment = {
-      helmet: { ...EQUIPMENT_DATA.crown },
-      weapon1: { ...EQUIPMENT_DATA.dagger },
+      helmet: null,
+      weapon1: null,
       weapon2: null,
       armor: null,
-      legs: { ...EQUIPMENT_DATA.gale_boots }
+      legs: null
     };
     this.turnInBattle = 0;
     this.lastEffectiveEnemyDamage = 0;
+
+    // 상점 상태
+    this.shopRerollPrice = 15;
+    this.shopStock = { equipment: [], tarot: [] };
 
     this.initElements();
     this.bindEvents();
@@ -682,11 +695,23 @@ class DiceSpireGame {
     this.tarotSlotsEl = document.getElementById('tarotSlots');
     this.tarotCountEl = document.getElementById('tarotCount');
 
-    // 장비(조커 시스템) 5칸 및 보상 엘리먼트
+    // 장비(조커 시스템) 5칸 엘리먼트
     this.equipmentSlotsEl = document.getElementById('equipmentSlots');
-    this.equipmentRewardSection = document.getElementById('equipmentRewardSection');
-    this.equipmentRewardOptions = document.getElementById('equipmentRewardOptions');
-    this.equipmentRewardFeedback = document.getElementById('equipmentRewardFeedback');
+
+    // 5라운드마다 등장하는 방랑 상점 엘리먼트
+    this.shopRoundBadge = document.getElementById('shopRoundBadge');
+    this.shopModal = document.getElementById('shopModal');
+    this.shopGoldCount = document.getElementById('shopGoldCount');
+    this.shopFloorNotice = document.getElementById('shopFloorNotice');
+    this.shopFeedback = document.getElementById('shopFeedback');
+    this.shopEquipmentList = document.getElementById('shopEquipmentList');
+    this.shopTarotList = document.getElementById('shopTarotList');
+    this.shopHealBtn = document.getElementById('shopHealBtn');
+    this.shopHealCost = document.getElementById('shopHealCost');
+    this.shopRerollBtn = document.getElementById('shopRerollBtn');
+    this.shopRerollCost = document.getElementById('shopRerollCost');
+    this.closeShopBtn = document.getElementById('closeShopBtn');
+    this.shopCurrentSlotsInfo = document.getElementById('shopCurrentSlotsInfo');
 
     // 보상 모달 3단계 엘리먼트 (중복 숫자 배치 지원)
     this.rewardModal = document.getElementById('rewardModal');
@@ -696,9 +721,6 @@ class DiceSpireGame {
     this.targetSlotSection = document.getElementById('targetSlotSection');
     this.targetSlotSelector = document.getElementById('targetSlotSelector');
     this.slotPreviewDesc = document.getElementById('slotPreviewDesc');
-    this.tarotRewardSection = document.getElementById('tarotRewardSection');
-    this.tarotRewardOptions = document.getElementById('tarotRewardOptions');
-    this.tarotRewardFeedback = document.getElementById('tarotRewardFeedback');
     this.skipRewardBtn = document.getElementById('skipRewardBtn');
     this.nextFloorBtn = document.getElementById('nextFloorBtn');
 
@@ -764,11 +786,23 @@ class DiceSpireGame {
     this.setupDropZone(this.defenseZone, 'defense');
     this.setupDropZone(this.dicePool, 'pool');
 
+    // 상점 이벤트 바인딩
+    this.closeShopBtn.addEventListener('click', () => {
+      this.closeShopAndProceed();
+    });
+
+    this.shopHealBtn.addEventListener('click', () => {
+      this.buyShopHeal();
+    });
+
+    this.shopRerollBtn.addEventListener('click', () => {
+      this.rerollShopItems();
+    });
+
     this.skipRewardBtn.addEventListener('click', () => {
       this.gold += 30;
       this.updateGoldDisplay();
-      this.rewardModal.style.display = 'none';
-      this.nextFloor();
+      this.finishRewardAndProceed();
     });
 
     this.restartGameBtn.addEventListener('click', () => {
@@ -842,12 +876,39 @@ class DiceSpireGame {
   }
 
   // ==========================================
-  // 전투 시작 및 층 진입
+  // 전투 시작 및 층 진입 (5라운드 주기 무한 스케일링)
   // ==========================================
+  getEnemyDataForFloor(floor) {
+    const cycle = Math.floor((floor - 1) / 5) + 1;
+    const indexInCycle = (floor - 1) % 5;
+    const baseEnemy = MONSTERS[indexInCycle];
+
+    if (cycle === 1) {
+      return JSON.parse(JSON.stringify(baseEnemy));
+    }
+
+    const hpBonus = (cycle - 1) * 35;
+    const statBonus = (cycle - 1) * 3;
+    const scaledEnemy = JSON.parse(JSON.stringify(baseEnemy));
+    scaledEnemy.floor = floor;
+    scaledEnemy.maxHp += hpBonus;
+    scaledEnemy.name = `[${cycle}회차] ${baseEnemy.name}`;
+    scaledEnemy.intents = scaledEnemy.intents.map(intent => {
+      const newIntent = { ...intent };
+      newIntent.val += statBonus;
+      const parts = newIntent.text.split(' ');
+      if (parts.length > 1) {
+        newIntent.text = `${parts.slice(0, -1).join(' ')} ${newIntent.val}`;
+      }
+      return newIntent;
+    });
+
+    return scaledEnemy;
+  }
+
   startBattle() {
     this.turnInBattle = 0;
-    const enemyData = MONSTERS.find(m => m.floor === this.floor) || MONSTERS[MONSTERS.length - 1];
-    this.currentEnemy = { ...enemyData };
+    this.currentEnemy = this.getEnemyDataForFloor(this.floor);
     this.enemyHp = this.currentEnemy.maxHp;
     this.enemyShield = 0;
     this.playerShield = 0;
@@ -1733,7 +1794,11 @@ class DiceSpireGame {
   handleVictory() {
     soundEngine.playVictory();
     this.isActionLocked = true;
-    this.gold += 30;
+    let victoryGold = 30;
+    if (this.floor % 5 === 0) {
+      victoryGold += 40; // 5라운드(보스) 격파 특별 보너스 골드 (+70 G 총 획득)
+    }
+    this.gold += victoryGold;
     this.updateGoldDisplay();
 
     setTimeout(() => {
@@ -1815,12 +1880,6 @@ class DiceSpireGame {
       this.rewardOptionsEl.appendChild(cardEl);
     });
 
-    // 보너스 타로 카드 보충 렌더링
-    this.renderTarotRewardSection();
-
-    // 장비 (조커 시스템) 보상 렌더링
-    this.renderEquipmentRewardSection();
-
     this.nextFloorBtn.onclick = () => {
       if (selectedEssence && selectedTargetDieIdx !== null && selectedSlotIdx !== null) {
         soundEngine.playEnchant();
@@ -1836,9 +1895,18 @@ class DiceSpireGame {
         // 인스펙터를 방금 강화한 주사위로 전환하여 즉시 눈으로 확인 가능
         this.setInspectedDie(selectedTargetDieIdx);
       }
-      this.rewardModal.style.display = 'none';
-      this.nextFloor();
+      this.finishRewardAndProceed();
     };
+  }
+
+  finishRewardAndProceed() {
+    this.rewardModal.style.display = 'none';
+    if (this.floor % 5 === 0) {
+      // 5라운드마다 상점 오픈!
+      this.openShopModal();
+    } else {
+      this.nextFloor();
+    }
   }
 
   // 2단계: 각인할 주사위(D1~D5) 선택 버튼 렌더링
@@ -1920,14 +1988,7 @@ class DiceSpireGame {
 
   nextFloor() {
     this.floor++;
-    if (this.floor > MONSTERS.length) {
-      alert('🏆 경축! 5층의 모든 몬스터와 고대 룬 골렘을 정복하셨습니다!');
-      this.floor = 1;
-      this.playerHp = this.playerMaxHp;
-      this.diceCollection = this.createInitialDiceCollection();
-    } else {
-      this.healPlayer(15);
-    }
+    this.healPlayer(15);
     this.startBattle();
   }
 
@@ -2159,24 +2220,61 @@ class DiceSpireGame {
     return null;
   }
 
-  renderEquipmentRewardSection() {
-    if (!this.equipmentRewardSection || !this.equipmentRewardOptions) return;
-    this.equipmentRewardOptions.innerHTML = '';
-    if (this.equipmentRewardFeedback) {
-      this.equipmentRewardFeedback.textContent = '새로운 장비(조커)를 선택하여 슬롯에 장착하거나 교체하세요 (선택적)';
-    }
+  // ==========================================
+  // 방랑 상인의 비밀 상점 (5라운드마다 오픈)
+  // ==========================================
+  openShopModal() {
+    soundEngine.playVictory();
+    this.shopFloorNotice.textContent = `${this.floor}라운드 돌파 기념 상점`;
+    this.shopModal.style.display = 'flex';
+    this.shopRerollPrice = 15;
+    this.shopFeedback.textContent = '원하는 상품을 클릭하여 구매할 수 있습니다.';
+    this.restockShop();
+    this.updateStatsUI();
+  }
 
-    // 현재 장착되지 않은 장비 중에서 무작위 3개 추천
+  restockShop() {
+    // 1. 장비(조커) 3개 선별 (보유하지 않은 장비 우선)
     const allEquipKeys = Object.keys(EQUIPMENT_DATA);
-    const availableKeys = allEquipKeys.filter(k => !this.hasEquip(k));
-    const pool = availableKeys.length >= 3 ? availableKeys : allEquipKeys;
-    const shuffled = pool.sort(() => 0.5 - Math.random()).slice(0, 3);
-    let equipChosen = false;
+    const unownedKeys = allEquipKeys.filter(k => !this.hasEquip(k));
+    const equipPool = unownedKeys.length >= 3 ? unownedKeys : allEquipKeys;
+    const shuffledEquips = [...equipPool].sort(() => 0.5 - Math.random()).slice(0, 3);
 
-    shuffled.forEach(key => {
+    this.shopStock.equipment = shuffledEquips.map(key => {
       const item = EQUIPMENT_DATA[key];
+      const price = EQUIPMENT_PRICES[item.rarity] || 60;
+      return {
+        ...item,
+        price,
+        soldOut: false
+      };
+    });
+
+    // 2. 타로 카드 2개 선별
+    const allTarotKeys = Object.keys(TAROT_CARDS);
+    const shuffledTarots = [...allTarotKeys].sort(() => 0.5 - Math.random()).slice(0, 2);
+
+    this.shopStock.tarot = shuffledTarots.map(key => {
+      const card = TAROT_CARDS[key];
+      return {
+        ...card,
+        price: TAROT_PRICE,
+        soldOut: false
+      };
+    });
+
+    this.renderShopStock();
+  }
+
+  renderShopStock() {
+    this.shopGoldCount.textContent = this.gold;
+    this.shopRerollCost.textContent = `💰 ${this.shopRerollPrice} G`;
+
+    // 1. 장비 매대 렌더링
+    this.shopEquipmentList.innerHTML = '';
+    this.shopStock.equipment.forEach((item, idx) => {
       const cardEl = document.createElement('div');
-      cardEl.className = `equipment-reward-card rarity-${item.rarity}`;
+      cardEl.className = `shop-item-card rarity-${item.rarity} ${item.soldOut ? 'sold-out' : ''}`;
 
       let slotLabel = item.slotName;
       if (item.slotType === 'weapon') {
@@ -2184,38 +2282,144 @@ class DiceSpireGame {
         slotLabel = `무기 (${freeW})`;
       } else {
         const cur = this.equipment[item.slotType];
-        if (cur) {
-          slotLabel = `${item.slotName} (교체: ${cur.name})`;
-        } else {
-          slotLabel = `${item.slotName} (신규 장착)`;
-        }
+        if (cur) slotLabel = `${item.slotName} (교체: ${cur.name})`;
+        else slotLabel = `${item.slotName} (신규)`;
       }
 
       cardEl.innerHTML = `
-        <div class="card-header">
-          <span class="equip-card-name">${item.icon} ${item.name}</span>
-          <span class="equip-rarity-tag">${slotLabel} · ${item.rarity.toUpperCase()}</span>
+        ${item.soldOut ? '<div class="sold-out-overlay">[ 품절 ]</div>' : ''}
+        <div class="shop-item-header">
+          <div class="shop-item-name-box">
+            <span class="shop-item-icon">${item.icon}</span>
+            <span class="shop-item-name">${item.name}</span>
+          </div>
+          <span class="shop-item-badge">${slotLabel}</span>
         </div>
-        <div class="equip-card-desc">${item.desc}</div>
+        <div class="shop-item-desc">${item.desc}</div>
+        <button class="shop-buy-btn" ${item.soldOut || this.gold < item.price ? 'disabled' : ''}>
+          <span>💰</span>
+          <span>${item.price} G 구매</span>
+        </button>
       `;
 
-      cardEl.addEventListener('click', () => {
-        if (equipChosen) return;
-        equipChosen = true;
-        const assignedSlot = this.equipItem(item);
-        const slotDef = EQUIPMENT_SLOT_DEFS.find(d => d.key === assignedSlot);
-        const slotDisplayName = slotDef ? slotDef.name : assignedSlot;
+      if (!item.soldOut) {
+        const buyBtn = cardEl.querySelector('.shop-buy-btn');
+        buyBtn.addEventListener('click', () => {
+          this.buyShopEquipment(idx);
+        });
+      }
 
-        this.equipmentRewardOptions.querySelectorAll('.equipment-reward-card').forEach(c => c.classList.remove('selected'));
-        cardEl.classList.add('selected');
-
-        if (this.equipmentRewardFeedback) {
-          this.equipmentRewardFeedback.textContent = `✨ [${item.name}]을(를) [${slotDisplayName}] 슬롯에 성공적으로 장착했습니다!`;
-        }
-      });
-
-      this.equipmentRewardOptions.appendChild(cardEl);
+      this.shopEquipmentList.appendChild(cardEl);
     });
+
+    // 2. 타로 카드 매대 렌더링
+    this.shopTarotList.innerHTML = '';
+    this.shopStock.tarot.forEach((card, idx) => {
+      const cardEl = document.createElement('div');
+      cardEl.className = `shop-item-card rarity-rare ${card.soldOut ? 'sold-out' : ''}`;
+
+      cardEl.innerHTML = `
+        ${card.soldOut ? '<div class="sold-out-overlay">[ 품절 ]</div>' : ''}
+        <div class="shop-item-header">
+          <div class="shop-item-name-box">
+            <span class="shop-item-icon">${card.icon}</span>
+            <span class="shop-item-name">${card.num}. ${card.name}</span>
+          </div>
+          <span class="shop-item-badge">소비 아이템</span>
+        </div>
+        <div class="shop-item-desc">${card.desc}</div>
+        <button class="shop-buy-btn" ${card.soldOut || this.gold < card.price ? 'disabled' : ''}>
+          <span>💰</span>
+          <span>${card.price} G 구매</span>
+        </button>
+      `;
+
+      if (!card.soldOut) {
+        const buyBtn = cardEl.querySelector('.shop-buy-btn');
+        buyBtn.addEventListener('click', () => {
+          this.buyShopTarot(idx);
+        });
+      }
+
+      this.shopTarotList.appendChild(cardEl);
+    });
+
+    // 회복 버튼 상태
+    this.shopHealBtn.disabled = (this.gold < POTION_PRICE || this.playerHp >= this.playerMaxHp);
+
+    // 새로고침 버튼 상태
+    this.shopRerollBtn.disabled = (this.gold < this.shopRerollPrice);
+
+    // 현재 장비 요약
+    const equippedCount = Object.values(this.equipment).filter(Boolean).length;
+    const tarotCount = this.tarotInventory.filter(Boolean).length;
+    this.shopCurrentSlotsInfo.textContent = `현재 보유 장비: ${equippedCount}/5칸 | 타로 카드: ${tarotCount}/2장 | 체력: ${this.playerHp}/${this.playerMaxHp}`;
+  }
+
+  buyShopEquipment(index) {
+    const item = this.shopStock.equipment[index];
+    if (!item || item.soldOut || this.gold < item.price) return;
+
+    this.gold -= item.price;
+    item.soldOut = true;
+    soundEngine.playDiceSlot();
+
+    const assignedSlot = this.equipItem(item);
+    const slotDef = EQUIPMENT_SLOT_DEFS.find(d => d.key === assignedSlot);
+    const slotDisplayName = slotDef ? slotDef.name : assignedSlot;
+
+    this.shopFeedback.textContent = `✨ [${item.name}] 장비를 구매하여 [${slotDisplayName}] 슬롯에 장착했습니다! (-${item.price} G)`;
+    this.updateGoldDisplay();
+    this.renderShopStock();
+  }
+
+  buyShopTarot(index) {
+    const card = this.shopStock.tarot[index];
+    if (!card || card.soldOut || this.gold < card.price) return;
+
+    this.gold -= card.price;
+    card.soldOut = true;
+    soundEngine.playEnchant();
+
+    let targetSlot = this.tarotInventory.findIndex(c => !c);
+    if (targetSlot === -1) {
+      targetSlot = 0; // 꽉 찼으면 1번 슬롯 교체
+    }
+
+    this.tarotInventory[targetSlot] = { ...card };
+    this.renderTarotSlots();
+
+    this.shopFeedback.textContent = `🎴 [${card.name}] 타로 카드를 구매하여 ${targetSlot + 1}번 슬롯에 보관했습니다! (-${card.price} G)`;
+    this.updateGoldDisplay();
+    this.renderShopStock();
+  }
+
+  buyShopHeal() {
+    if (this.gold < POTION_PRICE || this.playerHp >= this.playerMaxHp) return;
+
+    this.gold -= POTION_PRICE;
+    this.healPlayer(25);
+    soundEngine.playEnchant();
+    this.shopFeedback.textContent = `🍷 체력 회복 물약을 마셔 체력 25를 회복했습니다! (-${POTION_PRICE} G)`;
+    this.updateGoldDisplay();
+    this.renderShopStock();
+  }
+
+  rerollShopItems() {
+    if (this.gold < this.shopRerollPrice) return;
+
+    this.gold -= this.shopRerollPrice;
+    this.shopRerollPrice += 5;
+    soundEngine.playDiceRoll();
+
+    this.shopFeedback.textContent = `🎲 상점 품목을 새로고침했습니다! (-${this.shopRerollPrice - 5} G)`;
+    this.updateGoldDisplay();
+    this.restockShop();
+  }
+
+  closeShopAndProceed() {
+    this.shopModal.style.display = 'none';
+    this.nextFloor();
   }
 
   restartGame() {
@@ -2223,23 +2427,25 @@ class DiceSpireGame {
     this.gold = 50;
     this.playerHp = this.playerMaxHp;
     this.diceCollection = this.createInitialDiceCollection();
-    this.tarotInventory = [ { ...TAROT_CARDS.fool }, null ];
+    this.tarotInventory = [ null, null ];
     this.tarotBuffs = { attackMultiplier: 1 };
     this.enemyStunned = false;
 
-    // 장비(조커 시스템) 초기화
+    // 장비(조커 시스템) 초기화: 시작 시에는 모든 장비칸이 비어있음
     this.equipment = {
-      helmet: { ...EQUIPMENT_DATA.crown },
-      weapon1: { ...EQUIPMENT_DATA.dagger },
+      helmet: null,
+      weapon1: null,
       weapon2: null,
       armor: null,
-      legs: { ...EQUIPMENT_DATA.gale_boots }
+      legs: null
     };
     this.turnInBattle = 0;
     this.lastEffectiveEnemyDamage = 0;
 
+    this.renderTarotSlots();
     this.renderEquipmentSlots();
     this.gameOverModal.style.display = 'none';
+    if (this.shopModal) this.shopModal.style.display = 'none';
     this.startBattle();
   }
 
@@ -2269,6 +2475,21 @@ class DiceSpireGame {
       this.enemyShieldEl.textContent = this.enemyShield;
     } else {
       this.enemyShieldBadge.style.display = 'none';
+    }
+
+    // 다음 상점 라운드 배지 갱신
+    if (this.shopRoundBadge) {
+      const nextShopFloor = Math.ceil(this.floor / 5) * 5;
+      const roundsUntilShop = nextShopFloor - this.floor;
+      if (roundsUntilShop === 0) {
+        this.shopRoundBadge.textContent = `🏪 상점: ${this.floor}F 클리어 후 오픈!`;
+        this.shopRoundBadge.style.borderColor = 'var(--rarity-legendary)';
+        this.shopRoundBadge.style.color = '#fef08a';
+      } else {
+        this.shopRoundBadge.textContent = `🏪 상점: ${nextShopFloor}F (${roundsUntilShop}R 후)`;
+        this.shopRoundBadge.style.borderColor = 'rgba(245, 158, 11, 0.4)';
+        this.shopRoundBadge.style.color = '#fbbf24';
+      }
     }
 
     this.renderStatuses();

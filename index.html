@@ -19,6 +19,7 @@
       <div class="header-left">
         <span class="game-title">DICE &amp; SPIRE</span>
         <span class="floor-badge" id="floorBadge">층: 1F (던전 입구)</span>
+        <span class="shop-round-badge" id="shopRoundBadge">🏪 상점: 5F</span>
       </div>
       <div class="header-center">
         <div class="dice-inspector-container">
@@ -233,27 +234,90 @@
         <div class="slot-preview-desc" id="slotPreviewDesc"></div>
       </div>
 
-      <!-- 보너스: 타로 카드 보충 섹션 -->
-      <div class="tarot-reward-section" id="tarotRewardSection">
-        <div class="step-label">🎴 보너스 타로 카드 보충 (최대 2장 소지 가능)</div>
-        <div class="tarot-reward-options" id="tarotRewardOptions">
-          <!-- 타로 카드 보충 카드 -->
-        </div>
-        <div class="tarot-reward-feedback" id="tarotRewardFeedback"></div>
-      </div>
-
-      <!-- 신규: 장비 발견 및 장착 섹션 (발라트로 조커 스타일) -->
-      <div class="equipment-reward-section" id="equipmentRewardSection">
-        <div class="step-label">⚔️ 전리품 장비 발견 (발라트로 조커 스타일)</div>
-        <div class="equipment-reward-options" id="equipmentRewardOptions">
-          <!-- 장비 선택 카드 -->
-        </div>
-        <div class="equipment-reward-feedback" id="equipmentRewardFeedback"></div>
-      </div>
-
       <div class="modal-footer">
         <button id="skipRewardBtn" class="secondary-btn">각인 건너뛰기 (+30 Gold)</button>
         <button id="nextFloorBtn" class="primary-btn" disabled>각인 적용 및 다음 층으로 전진 ➡️</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5라운드마다 열리는 방랑 상점 (Shop Modal) -->
+  <div id="shopModal" class="modal-overlay" style="display: none;">
+    <div class="modal-card shop-modal-card">
+      <div class="shop-modal-header">
+        <div class="shop-header-title-box">
+          <div class="shop-title-row">
+            <span class="shop-title-icon">🏪</span>
+            <h2 class="shop-modal-title">방랑 상인의 비밀 상점</h2>
+            <span class="shop-round-tag" id="shopFloorNotice">5라운드 돌파 기념</span>
+          </div>
+          <p class="shop-modal-sub">모아둔 골드로 발라트로식 조커 장비와 강력한 타로 카드를 구매하세요!</p>
+        </div>
+        <div class="shop-gold-badge">
+          <span class="gold-icon">💰</span>
+          <span id="shopGoldCount">0</span> G
+        </div>
+      </div>
+
+      <div class="shop-feedback" id="shopFeedback">원하는 상품을 클릭하여 구매할 수 있습니다.</div>
+
+      <!-- 상점 진열대 1: 장비 (조커 시스템) -->
+      <div class="shop-category-section">
+        <div class="shop-category-header">
+          <div class="shop-category-title">
+            <span>👑</span>
+            <span>장비(조커) 진열대</span>
+          </div>
+          <span class="shop-category-hint">투구 / 무기(2칸) / 갑옷 / 하체 슬롯에 장착되어 전투 패시브 발동</span>
+        </div>
+        <div class="shop-cards-grid" id="shopEquipmentList">
+          <!-- JS로 장비 3종 렌더링 -->
+        </div>
+      </div>
+
+      <!-- 상점 진열대 2: 타로 카드 (소비 아이템) -->
+      <div class="shop-category-section">
+        <div class="shop-category-header">
+          <div class="shop-category-title">
+            <span>🎴</span>
+            <span>타로 카드 진열대</span>
+          </div>
+          <span class="shop-category-hint">전투 중 즉시 발동하는 강력한 1회용 마법 카드 (최대 2장 보유)</span>
+        </div>
+        <div class="shop-cards-grid" id="shopTarotList">
+          <!-- JS로 타로 2종 렌더링 -->
+        </div>
+      </div>
+
+      <!-- 상점 서비스: 포션 & 새로고침 -->
+      <div class="shop-services-bar">
+        <button id="shopHealBtn" class="shop-service-card" type="button">
+          <span class="service-icon">🍷</span>
+          <div class="service-text">
+            <div class="service-name">체력 회복 물약 (+25 HP)</div>
+            <div class="service-sub">전투로 소모된 체력을 치유합니다</div>
+          </div>
+          <div class="service-cost" id="shopHealCost">💰 25 G</div>
+        </button>
+
+        <button id="shopRerollBtn" class="shop-service-card" type="button">
+          <span class="service-icon">🎲</span>
+          <div class="service-text">
+            <div class="service-name">상점 품목 새로고침</div>
+            <div class="service-sub">새로운 장비와 타로 카드로 재입고</div>
+          </div>
+          <div class="service-cost" id="shopRerollCost">💰 15 G</div>
+        </button>
+      </div>
+
+      <!-- 모달 푸터: 쇼핑 종료 및 다음 라운드 진행 -->
+      <div class="shop-footer">
+        <div class="shop-current-slots-info" id="shopCurrentSlotsInfo">
+          <!-- 현재 장비 장착 현황 요약 -->
+        </div>
+        <button id="closeShopBtn" class="primary-btn shop-proceed-btn">
+          쇼핑 완료 &amp; 다음 라운드로 전진 ➡️
+        </button>
       </div>
     </div>
   </div>

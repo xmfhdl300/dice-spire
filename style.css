@@ -1750,3 +1750,338 @@ body {
   display: block;
   margin-bottom: 2px;
 }
+
+/* ==========================================
+   방랑 상인의 비밀 상점 (Shop Modal) 스타일링
+   ========================================== */
+.shop-round-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 4px 8px;
+  background: linear-gradient(135deg, rgba(234, 179, 8, 0.2), rgba(168, 85, 247, 0.2));
+  border: 1px solid rgba(234, 179, 8, 0.4);
+  color: #fde047;
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.shop-modal-card {
+  max-width: 920px;
+  width: 95%;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: linear-gradient(145deg, #110d1f 0%, #1a102f 45%, #0f0a1d 100%);
+  border: 2px solid #ca8a04;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(234, 179, 8, 0.25);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.shop-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(234, 179, 8, 0.25);
+  padding-bottom: 14px;
+}
+
+.shop-header-title-box {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.shop-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.shop-title-icon {
+  font-size: 1.6rem;
+}
+
+.shop-modal-title {
+  font-size: 1.4rem;
+  font-family: 'Cinzel', serif;
+  font-weight: 900;
+  color: #fef08a;
+  letter-spacing: -0.3px;
+  margin: 0;
+}
+
+.shop-round-tag {
+  font-size: 0.72rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(168, 85, 247, 0.3);
+  border: 1px solid #c084fc;
+  color: #e9d5ff;
+  font-weight: 700;
+}
+
+.shop-modal-sub {
+  font-size: 0.82rem;
+  color: #cbd5e1;
+  margin: 0;
+}
+
+.shop-gold-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1.5px solid #eab308;
+  border-radius: 999px;
+  padding: 6px 16px;
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: #fde047;
+  box-shadow: 0 0 15px rgba(234, 179, 8, 0.3);
+}
+
+.shop-feedback {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  color: #93c5fd;
+  text-align: center;
+}
+
+.shop-category-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.shop-category-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.shop-category-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #fce7f3;
+}
+
+.shop-category-hint {
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
+.shop-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.shop-item-card {
+  position: relative;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+.shop-item-card:hover:not(.sold-out) {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.shop-item-card.rarity-common { border-color: #64748b; }
+.shop-item-card.rarity-uncommon { border-color: #3b82f6; }
+.shop-item-card.rarity-rare { border-color: #a855f7; }
+.shop-item-card.rarity-legendary { border-color: #eab308; }
+
+.shop-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.shop-item-name-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.shop-item-icon {
+  font-size: 1.3rem;
+}
+
+.shop-item-name {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #f8fafc;
+}
+
+.shop-item-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+}
+
+.shop-item-desc {
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: #cbd5e1;
+  min-height: 48px;
+}
+
+.shop-buy-btn {
+  width: 100%;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, #eab308, #ca8a04);
+  border: 1px solid #fef08a;
+  border-radius: var(--radius-sm);
+  color: #422006;
+  font-weight: 800;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.18s ease;
+}
+
+.shop-buy-btn:hover:not(:disabled) {
+  filter: brightness(1.15);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(234, 179, 8, 0.4);
+}
+
+.shop-buy-btn:disabled {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: rgba(148, 163, 184, 0.5);
+  cursor: not-allowed;
+}
+
+.shop-item-card.sold-out {
+  opacity: 0.45;
+  filter: grayscale(0.85);
+  pointer-events: none;
+}
+
+.sold-out-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-12deg);
+  border: 2px solid #ef4444;
+  color: #fca5a5;
+  background: rgba(0, 0, 0, 0.85);
+  font-size: 0.95rem;
+  font-weight: 900;
+  padding: 4px 14px;
+  border-radius: 6px;
+  letter-spacing: 1px;
+  z-index: 10;
+  text-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+}
+
+/* 서비스 바 */
+.shop-services-bar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.shop-service-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-md);
+  color: #f1f5f9;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.shop-service-card:hover:not(:disabled) {
+  background: rgba(51, 65, 85, 0.8);
+  border-color: #38bdf8;
+  transform: translateY(-2px);
+}
+
+.shop-service-card:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.service-icon {
+  font-size: 1.6rem;
+}
+
+.service-text {
+  flex: 1;
+}
+
+.service-name {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.service-sub {
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
+.service-cost {
+  font-size: 0.85rem;
+  font-weight: 900;
+  color: #fde047;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(234, 179, 8, 0.3);
+}
+
+/* 모달 푸터 */
+.shop-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  padding-top: 14px;
+  gap: 14px;
+}
+
+.shop-current-slots-info {
+  font-size: 0.78rem;
+  color: #94a3b8;
+}
+
+.shop-proceed-btn {
+  padding: 12px 24px;
+  font-size: 0.95rem;
+  font-weight: 900;
+}
