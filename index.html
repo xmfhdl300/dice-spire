@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>다이스 & 스파이어 (Dice & Spire) - 주사위 덱빌딩 로그라이크</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800;900&family=Noto+Sans+KR:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- 배경 캔버스 (마법 입자 & 엠비언트 효과) -->
+  <canvas id="particleCanvas"></canvas>
+
+  <div id="gameContainer" class="game-container">
+    <!-- 상단 헤더: 던전 진행도, 골드, 사운드 토글 -->
+    <header class="top-bar">
+      <div class="header-left">
+        <span class="game-title">DICE &amp; SPIRE</span>
+        <span class="floor-badge" id="floorBadge">층: 1F (던전 입구)</span>
+      </div>
+      <div class="header-center">
+        <div class="dice-inspector-container">
+          <div class="dice-tabs" id="diceTabs">
+            <button class="dice-tab active" data-die-idx="0" type="button">D1</button>
+            <button class="dice-tab" data-die-idx="1" type="button">D2</button>
+            <button class="dice-tab" data-die-idx="2" type="button">D3</button>
+            <button class="dice-tab" data-die-idx="3" type="button">D4</button>
+            <button class="dice-tab" data-die-idx="4" type="button">D5</button>
+          </div>
+          <div class="dice-faces-strip" id="diceFacesStrip" title="선택된 주사위의 1~6번 면 속성">
+            <!-- 선택된 주사위의 6개 면 슬롯 -->
+          </div>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="stat-badge">💰 <span id="goldCount">50</span> G</div>
+        <button id="audioToggleBtn" class="icon-btn" title="소리 켜기/끄기">🔊</button>
+        <button id="helpBtn" class="icon-btn" title="게임 방법">❓</button>
+      </div>
+    </header>
+
+    <!-- 전투 스테이지 아레나 -->
+    <main class="battle-arena" id="battleArena">
+      <!-- 플레이어 영역 -->
+      <section class="combatant-card player-area" id="playerArea">
+        <div class="combatant-avatar player-avatar">
+          <div class="avatar-glow"></div>
+          <div class="avatar-sprite">⚔️</div>
+          <!-- 방어도 배지 -->
+          <div class="shield-badge" id="playerShieldBadge" style="display: none;">
+            🛡️ <span id="playerShield">0</span>
+          </div>
+        </div>
+        <div class="combatant-info">
+          <div class="name-row">
+            <span class="combatant-name">주사위 검사 (플레이어)</span>
+          </div>
+          <div class="hp-bar-container">
+            <div class="hp-bar" id="playerHpBar" style="width: 100%;"></div>
+            <div class="hp-text" id="playerHpText">60 / 60</div>
+          </div>
+          <div class="status-row" id="playerStatusRow">
+            <!-- 상태이상 아이콘 (화상, 약화 등) -->
+          </div>
+        </div>
+      </section>
+
+      <!-- 중앙 VS 및 턴 알림 -->
+      <div class="arena-center">
+        <div class="turn-indicator" id="turnIndicator">당신의 턴</div>
+        <div class="battle-message" id="battleMessage">주사위를 스킬 카드 슬롯에 드래그하거나 클릭하여 넣으세요!</div>
+      </div>
+
+      <!-- 몬스터 영역 -->
+      <section class="combatant-card enemy-area" id="enemyArea">
+        <!-- 몬스터 의도(Intent) 미리보기 (슬더스 스타일) -->
+        <div class="intent-bubble" id="enemyIntentBubble">
+          <span class="intent-icon" id="enemyIntentIcon">⚔️</span>
+          <span class="intent-text" id="enemyIntentText">공격 7</span>
+        </div>
+
+        <div class="combatant-avatar enemy-avatar" id="enemyAvatar">
+          <div class="avatar-glow enemy-glow"></div>
+          <div class="avatar-sprite" id="enemySprite">👺</div>
+          <div class="shield-badge" id="enemyShieldBadge" style="display: none;">
+            🛡️ <span id="enemyShield">0</span>
+          </div>
+        </div>
+        <div class="combatant-info">
+          <div class="name-row">
+            <span class="combatant-name" id="enemyName">고블린 약탈자</span>
+            <span class="enemy-tier" id="enemyTier">일반</span>
+          </div>
+          <div class="hp-bar-container">
+            <div class="hp-bar enemy-hp-bar" id="enemyHpBar" style="width: 100%;"></div>
+            <div class="hp-text" id="enemyHpText">36 / 36</div>
+          </div>
+          <div class="status-row" id="enemyStatusRow">
+            <!-- 몬스터 상태이상 -->
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- 하단 영역: 스킬 카드 덱 & 주사위 트레이 -->
+      <!-- 공격 & 방어 분배 존 (스킬 슬롯 대신 드래그 앤 드롭 할당) -->
+      <div class="allocation-section">
+        <!-- 공격 존 -->
+        <div class="tactical-zone attack-zone" id="attackZone" data-zone="attack">
+          <div class="zone-header">
+            <div class="zone-title">
+              <span class="zone-icon">⚔️</span>
+              <span class="zone-name">공격 존 (ATTACK)</span>
+            </div>
+            <div class="zone-stat-badge attack-badge">
+              예상 피해: <span id="projectedAttackDmg">0</span>
+            </div>
+          </div>
+          <div class="zone-drop-area" id="attackDropArea">
+            <div class="zone-placeholder" id="attackPlaceholder">
+              주사위를 여기로 드래그하거나 클릭하여 공격력 누적
+            </div>
+            <div class="allocated-dice-list" id="attackDiceList"></div>
+          </div>
+          <div class="zone-footer">
+            <span class="zone-subtext" id="attackComboBonus">주사위 눈의 합만큼 적에게 피해를 줍니다</span>
+            <button class="quick-allocate-btn" id="quickAttackBtn" type="button">공격으로 일괄 할당</button>
+          </div>
+        </div>
+
+        <!-- 방어 존 -->
+        <div class="tactical-zone defense-zone" id="defenseZone" data-zone="defense">
+          <div class="zone-header">
+            <div class="zone-title">
+              <span class="zone-icon">🛡️</span>
+              <span class="zone-name">방어 존 (DEFENSE)</span>
+            </div>
+            <div class="zone-stat-badge defense-badge">
+              예상 방어: <span id="projectedDefenseShield">0</span>
+            </div>
+          </div>
+          <div class="zone-drop-area" id="defenseDropArea">
+            <div class="zone-placeholder" id="defensePlaceholder">
+              주사위를 여기로 드래그하거나 클릭하여 방어도 누적
+            </div>
+            <div class="allocated-dice-list" id="defenseDiceList"></div>
+          </div>
+          <div class="zone-footer">
+            <span class="zone-subtext" id="defenseComboBonus">주사위 눈의 합만큼 방어도를 획득합니다</span>
+            <button class="quick-allocate-btn" id="quickDefenseBtn" type="button">방어로 일괄 할당</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 주사위 풀 및 턴 종료 버튼 트레이 -->
+      <div class="dice-deck-tray">
+        <div class="dice-pool-container">
+          <div class="dice-pool-header">
+            <span>미할당 주사위 (<span id="diceAvailableCount">5</span>/5)</span>
+            <div class="pool-actions">
+              <button id="resetDiceBtn" class="sub-action-btn" title="할당된 모든 주사위를 풀로 되돌리기">🔄 초기화</button>
+              <button id="rerollAbilityBtn" class="sub-action-btn" title="미할당 주사위 전체 재굴림 (전투당 1회)">🎲 재굴림 (1)</button>
+            </div>
+          </div>
+          <div class="dice-pool" id="dicePool">
+            <!-- 굴려진 5개의 주사위들 -->
+          </div>
+        </div>
+
+        <!-- 행동 실행 및 턴 종료 버튼 -->
+        <div class="turn-actions">
+          <button id="endTurnBtn" class="end-turn-button">
+            <span class="btn-text">행동 실행 &amp; 턴 종료</span>
+            <span class="btn-subtext">공격/방어 발동 후 적 턴</span>
+          </button>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- 전투 보상 모달 (승리 시 주사위 1개의 1면 각인 선택) -->
+  <div id="rewardModal" class="modal-overlay" style="display: none;">
+    <div class="modal-card enchant-modal-card">
+      <div class="modal-header">
+        <h2 class="modal-title">✨ 주사위 1면 원소 각인</h2>
+        <p class="modal-desc">원하는 원소 면을 선택한 후, 각인할 대상 주사위(D1~D5)를 지정하세요.</p>
+      </div>
+
+      <!-- 1단계: 원소 면 선택 (불꽃 1 / 암흑 5 / 신성 3 등) -->
+      <div class="step-label">1단계: 각인할 원소 면 선택</div>
+      <div class="reward-options" id="rewardOptions">
+        <!-- 3개 선택지 원소 카드 -->
+      </div>
+
+      <!-- 2단계: 대상 주사위 선택 (D1 ~ D5) -->
+      <div class="target-die-section" id="targetDieSection" style="display: none;">
+        <div class="step-label">2단계: 각인할 대상 주사위 선택</div>
+        <div class="target-dice-selector" id="targetDiceSelector">
+          <!-- D1 ~ D5 선택 버튼들 -->
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button id="skipRewardBtn" class="secondary-btn">각인 건너뛰기 (+30 Gold)</button>
+        <button id="nextFloorBtn" class="primary-btn" disabled>각인 적용 및 다음 층으로 전진 ➡️</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 게임 오버 모달 -->
+  <div id="gameOverModal" class="modal-overlay" style="display: none;">
+    <div class="modal-card game-over-card">
+      <h2 class="modal-title defeat-title">💀 탑에서 쓰러졌습니다</h2>
+      <p class="modal-desc" id="gameOverStats">도달한 층: 1F | 획득 골드: 50</p>
+      <button id="restartGameBtn" class="primary-btn pulse-glow">처음부터 다시 도전 🔄</button>
+    </div>
+  </div>
+
+  <!-- 도움말 / 룰 안내 모달 -->
+  <div id="helpModal" class="modal-overlay" style="display: none;">
+    <div class="modal-card help-card">
+      <h2 class="modal-title">🎲 다이스 &amp; 스파이어 룰 가이드</h2>
+      <div class="help-content">
+        <div class="help-item">
+          <strong>1. 주사위 5개 굴리기</strong>
+          <p>매 턴마다 5개의 주사위를 굴립니다. 마음에 들지 않으면 '재굴림'으로 다시 굴릴 수 있습니다.</p>
+        </div>
+        <div class="help-item">
+          <strong>2. 공격 존 &amp; 방어 존에 주사위 배분</strong>
+          <p>주사위를 드래그하거나 주사위를 클릭 후 공격 존 / 방어 존을 클릭하여 할당하세요. (할당된 주사위를 다시 클릭하면 풀로 되돌아옵니다)</p>
+        </div>
+        <div class="help-item">
+          <strong>3. 조합 보너스 (콤보)</strong>
+          <p>같은 숫자 2개(페어: +3), 3개(트리플: +6) 또는 연속된 숫자(스트레이트: +8) 등 특별한 콤보 시 추가 수치가 부여됩니다!</p>
+        </div>
+        <div class="help-item">
+          <strong>4. 적의 의도(Intent)와 턴 종료</strong>
+          <p>적이 이번 턴에 가할 공격 수치(예: 8)를 확인하고, 방어에 적절한 주사위를 할당하여 체력을 보존하세요!</p>
+        </div>
+      </div>
+      <button id="closeHelpBtn" class="primary-btn">확인했습니다!</button>
+    </div>
+  </div>
+
+  <!-- 사운드 & 로직 스크립트 연결 -->
+  <script src="audio.js"></script>
+  <script src="particles.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
