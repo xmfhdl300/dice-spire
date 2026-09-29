@@ -273,7 +273,208 @@ const TAROT_CARDS = {
 };
 
 // ==========================================
-// 3. 몬스터 풀 (층별 난이도)
+// 3. 장비(조커 시스템) 정의: 투구 / 무기(2칸) / 갑옷 / 하체
+// ==========================================
+const EQUIPMENT_SLOT_DEFS = [
+  { key: 'helmet', name: '투구', icon: '🪖' },
+  { key: 'weapon1', name: '무기 1', icon: '⚔️' },
+  { key: 'weapon2', name: '무기 2', icon: '🗡️' },
+  { key: 'armor', name: '갑옷', icon: '🛡️' },
+  { key: 'legs', name: '하체', icon: '👢' }
+];
+
+const EQUIPMENT_DATA = {
+  // --- 투구 (Helmet) ---
+  crown: {
+    id: 'crown',
+    slotType: 'helmet',
+    slotName: '투구',
+    name: '군주의 황금관',
+    icon: '👑',
+    rarity: 'rare',
+    desc: '페어 이상의 모든 콤보 완성 시 공격력 +8 & 방어도 +6 추가',
+    procText: '👑황금관'
+  },
+  oracle: {
+    id: 'oracle',
+    slotType: 'helmet',
+    slotName: '투구',
+    name: '예지자의 서클릿',
+    icon: '🔮',
+    rarity: 'uncommon',
+    desc: '매 턴 시작 시 주사위 재굴림 횟수 +1 추가 충전',
+    procText: '🔮예지자'
+  },
+  berserker_helm: {
+    id: 'berserker_helm',
+    slotType: 'helmet',
+    slotName: '투구',
+    name: '광전사의 뿔투구',
+    icon: '🪖',
+    rarity: 'rare',
+    desc: '체력이 50% 이하일 때 공격 존 총 피해량 1.5배 폭발 증폭',
+    procText: '🪖광전사'
+  },
+  sage_hood: {
+    id: 'sage_hood',
+    slotType: 'helmet',
+    slotName: '투구',
+    name: '현자의 룬 후드',
+    icon: '🧙',
+    rarity: 'uncommon',
+    desc: '배치된 모든 홀수(1, 3, 5) 주사위마다 방어도 +2 & 적 화상 1 부여',
+    procText: '🧙현자'
+  },
+
+  // --- 무기 (Weapon - 2칸 장착 가능) ---
+  dagger: {
+    id: 'dagger',
+    slotType: 'weapon',
+    slotName: '무기',
+    name: '암살자의 비수',
+    icon: '🗡️',
+    rarity: 'common',
+    desc: '공격 존의 [6] 눈금 주사위 1개당 치명타 보너스 +6 피해',
+    procText: '🗡️치명타'
+  },
+  twin_rapiers: {
+    id: 'twin_rapiers',
+    slotType: 'weapon',
+    slotName: '무기',
+    name: '쌍둥이 결투검',
+    icon: '⚔️',
+    rarity: 'uncommon',
+    desc: '공격 존에 주사위 3개 이상 배치 시 적의 방패 12를 즉시 관통 분쇄',
+    procText: '⚔️방패관통'
+  },
+  staff: {
+    id: 'staff',
+    slotType: 'weapon',
+    slotName: '무기',
+    name: '원소 폭풍 지팡이',
+    icon: '🪄',
+    rarity: 'rare',
+    desc: '모든 원소 각인(화염/암흑/신성/번개/빙결)의 효과를 2배로 폭발 증폭',
+    procText: '🪄원소폭풍'
+  },
+  vampire_blade: {
+    id: 'vampire_blade',
+    slotType: 'weapon',
+    slotName: '무기',
+    name: '흡혈귀의 세이버',
+    icon: '🩸',
+    rarity: 'rare',
+    desc: '공격으로 적 체력에 입힌 순수 피해의 25%를 플레이어 체력으로 흡혈',
+    procText: '🩸흡혈'
+  },
+  repeater_crossbow: {
+    id: 'repeater_crossbow',
+    slotType: 'weapon',
+    slotName: '무기',
+    name: '연발 기계 석궁',
+    icon: '🏹',
+    rarity: 'uncommon',
+    desc: '공격 존의 모든 짝수(2, 4, 6) 주사위 1개당 공격력 +4 추가 보너스',
+    procText: '🏹연발사격'
+  },
+  meteor_mace: {
+    id: 'meteor_mace',
+    slotType: 'weapon',
+    slotName: '무기',
+    name: '유성 파쇄 메이스',
+    icon: '☄️',
+    rarity: 'legendary',
+    desc: '턴 종료 시 유성이 낙하하여 적에게 10 폭발 피해 및 화상 3 부여',
+    procText: '☄️유성낙하'
+  },
+
+  // --- 갑옷 (Armor) ---
+  paladin_plate: {
+    id: 'paladin_plate',
+    slotType: 'armor',
+    slotName: '갑옷',
+    name: '성기사의 수호 판금',
+    icon: '🛡️',
+    rarity: 'rare',
+    desc: '매 턴 시작 시 방어도 +8 기본 획득 및 방어 존 총 방어도 1.25배 증폭',
+    procText: '🛡️성기사'
+  },
+  spiked_carapace: {
+    id: 'spiked_carapace',
+    slotType: 'armor',
+    slotName: '갑옷',
+    name: '가시 돋친 흑요석 갑주',
+    icon: '🥋',
+    rarity: 'uncommon',
+    desc: '적에게 공격받을 때, 보유한 방어도만큼 적에게 즉시 가시 반격 피해',
+    procText: '🥋가시반격'
+  },
+  dragon_cuirass: {
+    id: 'dragon_cuirass',
+    slotType: 'armor',
+    slotName: '갑옷',
+    name: '용비늘 붉은 흉갑',
+    icon: '🐉',
+    rarity: 'legendary',
+    desc: '받는 모든 피해 5 절대 감소 & 피격 시 공격한 적에게 화상 2 부여',
+    procText: '🐉용비늘'
+  },
+  nebula_robes: {
+    id: 'nebula_robes',
+    slotType: 'armor',
+    slotName: '갑옷',
+    name: '마도사의 성운 로브',
+    icon: '✨',
+    rarity: 'rare',
+    desc: '매 턴 시작 시 주사위 풀의 무작위 주사위 1개에 이번 턴 원소 각인 부여',
+    procText: '✨성운각인'
+  },
+
+  // --- 하체 (Legs) ---
+  gale_boots: {
+    id: 'gale_boots',
+    slotType: 'legs',
+    slotName: '하체',
+    name: '질풍의 도약 장화',
+    icon: '👢',
+    rarity: 'common',
+    desc: '각 전투의 첫 번째 턴에 공격력 +12 폭발적 추가',
+    procText: '👢질풍도약'
+  },
+  iron_sabatons: {
+    id: 'iron_sabatons',
+    slotType: 'legs',
+    slotName: '하체',
+    name: '불굴의 강철 경갑',
+    icon: '🦿',
+    rarity: 'uncommon',
+    desc: '턴이 끝나도 남아있던 방어도의 50%가 다음 턴으로 소멸되지 않고 이월',
+    procText: '🦿방패이월'
+  },
+  titan_greaves: {
+    id: 'titan_greaves',
+    slotType: 'legs',
+    slotName: '하체',
+    name: '거인의 대지 각반',
+    icon: '🪨',
+    rarity: 'rare',
+    desc: '방어 존에 눈금 [5] 이상의 주사위가 있으면 적의 이번 턴 공격력 5 감소',
+    procText: '🪨거인의위압'
+  },
+  shadow_tabi: {
+    id: 'shadow_tabi',
+    slotType: 'legs',
+    slotName: '하체',
+    name: '그림자 잠행 버선',
+    icon: '🥷',
+    rarity: 'legendary',
+    desc: '스트레이트 콤보(3연속 이상) 달성 시 적을 1턴간 기절(스턴)시킴',
+    procText: '🥷그림자기절'
+  }
+};
+
+// ==========================================
+// 4. 몬스터 풀 (층별 난이도)
 // ==========================================
 const MONSTERS = [
   {
@@ -381,6 +582,17 @@ class DiceSpireGame {
     this.tarotBuffs = { attackMultiplier: 1 };
     this.enemyStunned = false;
 
+    // 장비(조커 시스템) 5칸: 투구, 무기 1, 무기 2, 갑옷, 하체
+    this.equipment = {
+      helmet: { ...EQUIPMENT_DATA.crown },
+      weapon1: { ...EQUIPMENT_DATA.dagger },
+      weapon2: null,
+      armor: null,
+      legs: { ...EQUIPMENT_DATA.gale_boots }
+    };
+    this.turnInBattle = 0;
+    this.lastEffectiveEnemyDamage = 0;
+
     this.initElements();
     this.bindEvents();
     this.startBattle();
@@ -469,6 +681,12 @@ class DiceSpireGame {
     // 소비 아이템: 타로 카드 2칸 슬롯 엘리먼트
     this.tarotSlotsEl = document.getElementById('tarotSlots');
     this.tarotCountEl = document.getElementById('tarotCount');
+
+    // 장비(조커 시스템) 5칸 및 보상 엘리먼트
+    this.equipmentSlotsEl = document.getElementById('equipmentSlots');
+    this.equipmentRewardSection = document.getElementById('equipmentRewardSection');
+    this.equipmentRewardOptions = document.getElementById('equipmentRewardOptions');
+    this.equipmentRewardFeedback = document.getElementById('equipmentRewardFeedback');
 
     // 보상 모달 3단계 엘리먼트 (중복 숫자 배치 지원)
     this.rewardModal = document.getElementById('rewardModal');
@@ -627,6 +845,7 @@ class DiceSpireGame {
   // 전투 시작 및 층 진입
   // ==========================================
   startBattle() {
+    this.turnInBattle = 0;
     const enemyData = MONSTERS.find(m => m.floor === this.floor) || MONSTERS[MONSTERS.length - 1];
     this.currentEnemy = { ...enemyData };
     this.enemyHp = this.currentEnemy.maxHp;
@@ -644,6 +863,7 @@ class DiceSpireGame {
 
     this.renderDiceFacesStrip();
     this.renderTarotSlots();
+    this.renderEquipmentSlots();
     this.updateStatsUI();
     this.startPlayerTurn();
   }
@@ -655,21 +875,60 @@ class DiceSpireGame {
     this.isPlayerTurn = true;
     this.isActionLocked = false;
     this.tarotBuffs = { attackMultiplier: 1 };
+    this.turnInBattle++;
     this.turnIndicator.textContent = '당신의 턴';
     this.turnIndicator.style.color = 'var(--accent-cyan)';
     this.endTurnBtn.disabled = false;
     this.battleMessage.textContent = '주사위를 공격/방어 존에 분배하거나 타로 카드를 사용하세요!';
 
-    this.playerShield = 0;
-    this.rerollsLeft = this.baseRerolls;
+    // 하체 장비: 불굴의 강철 경갑 (방어도 50% 이월)
+    let carryShield = 0;
+    if (this.hasEquip('iron_sabatons') && this.playerShield > 0) {
+      carryShield = Math.floor(this.playerShield * 0.5);
+      if (carryShield > 0) {
+        this.triggerEquipProc('legs', `🛡️ 이월 방어 +${carryShield}`);
+      }
+    }
+    this.playerShield = carryShield;
+
+    // 갑옷 장비: 성기사의 수호 판금 (매 턴 시작 시 방어도 +8)
+    if (this.hasEquip('paladin_plate')) {
+      this.playerShield += 8;
+      this.triggerEquipProc('armor', '🛡️ 판금 방어 +8');
+    }
+
+    // 투구 장비: 예지자의 서클릿 (재굴림 +1)
+    let extraRerolls = 0;
+    if (this.hasEquip('oracle')) {
+      extraRerolls = 1;
+      this.triggerEquipProc('helmet', '🔮 재굴림 +1');
+    }
+
+    this.rerollsLeft = this.baseRerolls + extraRerolls;
     this.rerollAbilityBtn.disabled = false;
     this.rerollAbilityBtn.textContent = `🎲 재굴림 (${this.rerollsLeft})`;
 
     this.renderTarotSlots();
+    this.renderEquipmentSlots();
     this.pickEnemyIntent();
 
     // 5개의 독립된 주사위 각각 굴리기!
     this.rollIndependentDice();
+
+    // 갑옷 장비: 마도사의 성운 로브 (풀의 무작위 주사위에 임시 원소 각인 부여)
+    if (this.hasEquip('nebula_robes')) {
+      const pool = this.diceList.filter(d => d.zone === 'pool');
+      if (pool.length > 0) {
+        const targetDie = pool[Math.floor(Math.random() * pool.length)];
+        const elemKeys = Object.keys(ENCHANT_TYPES);
+        const randomElem = ENCHANT_TYPES[elemKeys[Math.floor(Math.random() * elemKeys.length)]];
+        targetDie.enchant = { ...randomElem, face: targetDie.value };
+        this.triggerEquipProc('armor', `✨ ${randomElem.name} 부여!`);
+        this.renderAllDice();
+        this.calculateProjections();
+      }
+    }
+
     this.updateStatsUI();
   }
 
@@ -1049,7 +1308,79 @@ class DiceSpireGame {
       }
     });
 
+    // 무기 장비: 원소 폭풍 지팡이 (모든 원소 각인 효과 2배)
+    if (this.hasEquip('staff') && enchantBonus > 0) {
+      enchantBonus *= 2;
+      enchantDescriptions.push('🪄폭풍지팡이 2배');
+    }
+
+    // 투구 장비: 군주의 황금관 (콤보 완성 시 공격 +8 / 방어 +6)
+    if (this.hasEquip('crown') && comboBonus > 0) {
+      if (zoneType === 'attack') {
+        comboBonus += 8;
+        comboNames.push('👑황금관 +8');
+      } else {
+        comboBonus += 6;
+        comboNames.push('👑황금관 +6');
+      }
+    }
+
     let total = baseSum + comboBonus + enchantBonus;
+
+    // 투구 장비: 광전사의 뿔투구 (체력 50% 이하 시 공격 1.5배)
+    if (this.hasEquip('berserker_helm') && zoneType === 'attack' && this.playerHp <= this.playerMaxHp * 0.5) {
+      total = Math.floor(total * 1.5);
+      comboNames.push('🪖광전사 ×1.5');
+    }
+
+    // 투구 장비: 현자의 룬 후드 (홀수 주사위당 방어 +2)
+    if (this.hasEquip('sage_hood')) {
+      const oddCount = dice.filter(d => d.value % 2 === 1).length;
+      if (oddCount > 0) {
+        if (zoneType === 'defense') {
+          total += oddCount * 2;
+          comboNames.push(`🧙현자방어 +${oddCount * 2}`);
+        } else {
+          comboNames.push(`🧙현자화상 +${oddCount}`);
+        }
+      }
+    }
+
+    // 무기 장비: 암살자의 비수 (6 눈금 주사위당 치명타 +6)
+    if (this.hasEquip('dagger') && zoneType === 'attack') {
+      const sixCount = dice.filter(d => d.value === 6).length;
+      if (sixCount > 0) {
+        total += sixCount * 6;
+        comboNames.push(`🗡️비수치명 +${sixCount * 6}`);
+      }
+    }
+
+    // 무기 장비: 연발 기계 석궁 (짝수 주사위당 공격 +4)
+    if (this.hasEquip('repeater_crossbow') && zoneType === 'attack') {
+      const evenCount = dice.filter(d => d.value % 2 === 0).length;
+      if (evenCount > 0) {
+        total += evenCount * 4;
+        comboNames.push(`🏹연발석궁 +${evenCount * 4}`);
+      }
+    }
+
+    // 갑옷 장비: 성기사의 수호 판금 (방어 존 총 방어도 1.25배)
+    if (this.hasEquip('paladin_plate') && zoneType === 'defense') {
+      total = Math.floor(total * 1.25);
+      comboNames.push('🛡️판금 ×1.25');
+    }
+
+    // 하체 장비: 질풍의 도약 장화 (전투 1턴째 공격 +12)
+    if (this.hasEquip('gale_boots') && zoneType === 'attack' && this.turnInBattle === 1) {
+      total += 12;
+      comboNames.push('👢질풍도약 +12');
+    }
+
+    // 하체 장비: 거인의 대지 각반 (방어 존 5 이상 눈금 존재 시)
+    if (this.hasEquip('titan_greaves') && zoneType === 'defense' && dice.some(d => d.value >= 5)) {
+      comboNames.push('🪨거인의위압(적-5)');
+    }
+
     if (zoneType === 'defense' && hasHolyDefense) {
       total = Math.floor(total * 1.5);
     }
@@ -1086,6 +1417,14 @@ class DiceSpireGame {
     const attackCalc = this.currentAttackCalculation || { total: 0, dice: [] };
     const defenseCalc = this.currentDefenseCalculation || { total: 0, dice: [] };
 
+    // 무기 장비: 쌍둥이 결투검 (공격 존 3개 이상 주사위 배치 시 적 방패 12 즉시 관통)
+    if (this.hasEquip('twin_rapiers') && attackCalc.dice.length >= 3 && this.enemyShield > 0) {
+      const pierce = Math.min(this.enemyShield, 12);
+      this.enemyShield -= pierce;
+      this.triggerEquipProc(this.getEquipSlotKey('twin_rapiers'), `⚔️ 방패 -${pierce} 관통!`);
+      this.showFloatingText(`방패 관통 -${pierce}`, 'shield-number', this.enemyAreaEl);
+    }
+
     // 1. 공격 발동
     if (attackCalc.total > 0) {
       soundEngine.playSlash();
@@ -1096,6 +1435,51 @@ class DiceSpireGame {
           d.enchant.procAttack(this, d);
         }
       });
+
+      // 발라트로 조커 발동 시각 피드백
+      if (this.hasEquip('crown') && attackCalc.comboBonus > 0) {
+        this.triggerEquipProc(this.getEquipSlotKey('crown'), '👑 황금관 보너스!');
+      }
+      if (this.hasEquip('dagger') && attackCalc.dice.some(d => d.value === 6)) {
+        this.triggerEquipProc(this.getEquipSlotKey('dagger'), '🗡️ 치명타 발동!');
+      }
+      if (this.hasEquip('repeater_crossbow') && attackCalc.dice.some(d => d.value % 2 === 0)) {
+        this.triggerEquipProc(this.getEquipSlotKey('repeater_crossbow'), '🏹 연발사격!');
+      }
+      if (this.hasEquip('gale_boots') && this.turnInBattle === 1) {
+        this.triggerEquipProc(this.getEquipSlotKey('gale_boots'), '👢 질풍도약 +12!');
+      }
+      if (this.hasEquip('berserker_helm') && this.playerHp <= this.playerMaxHp * 0.5) {
+        this.triggerEquipProc(this.getEquipSlotKey('berserker_helm'), '🪖 광전사 폭발!');
+      }
+      if (this.hasEquip('staff') && attackCalc.enchantBonus > 0) {
+        this.triggerEquipProc(this.getEquipSlotKey('staff'), '🪄 원소 2배 증폭!');
+      }
+
+      // 무기 장비: 흡혈귀의 세이버 (적 체력에 입힌 순수 피해 25% 흡혈)
+      if (this.hasEquip('vampire_blade') && this.lastEffectiveEnemyDamage > 0) {
+        const healAmt = Math.max(1, Math.floor(this.lastEffectiveEnemyDamage * 0.25));
+        this.healPlayer(healAmt);
+        this.triggerEquipProc(this.getEquipSlotKey('vampire_blade'), `🩸 +${healAmt} 흡혈!`);
+      }
+    }
+
+    // 투구 장비: 현자의 룬 후드 (배치된 홀수 주사위당 적 화상 1)
+    if (this.hasEquip('sage_hood')) {
+      const allActiveDice = (attackCalc.dice || []).concat(defenseCalc.dice || []);
+      const oddCount = allActiveDice.filter(d => d.value % 2 === 1).length;
+      if (oddCount > 0) {
+        this.applyEnemyStatus('burn', oddCount);
+        this.triggerEquipProc(this.getEquipSlotKey('sage_hood'), `🧙 화상 +${oddCount}`);
+      }
+    }
+
+    // 하체 장비: 그림자 잠행 버선 (스트레이트 콤보 달성 시 적 1턴 스턴)
+    if (this.hasEquip('shadow_tabi') && (attackCalc.description.includes('스트레이트') || defenseCalc.description.includes('스트레이트'))) {
+      this.enemyStunned = true;
+      if (this.enemyIntentText) this.enemyIntentText.textContent = '기절 상태 (잠행 스턴)';
+      this.triggerEquipProc(this.getEquipSlotKey('shadow_tabi'), '🥷 그림자 기절!');
+      this.showFloatingText('💫 기절!', 'crit-number', this.enemyAreaEl);
     }
 
     // 2. 방어도 획득
@@ -1109,7 +1493,28 @@ class DiceSpireGame {
             d.enchant.procDefense(this, d);
           }
         });
+
+        if (this.hasEquip('paladin_plate')) {
+          this.triggerEquipProc(this.getEquipSlotKey('paladin_plate'), '🛡️ 판금 증폭!');
+        }
+
+        // 하체 장비: 거인의 대지 각반 (방어 존 5 이상 눈금 시 적 공격력 5 감소)
+        if (this.hasEquip('titan_greaves') && defenseCalc.dice.some(d => d.value >= 5) && this.currentIntent && this.currentIntent.type === 'attack') {
+          this.currentIntent.val = Math.max(0, this.currentIntent.val - 5);
+          this.enemyIntentText.textContent = `${this.currentIntent.text.split(' ')[0]} ${this.currentIntent.val} (위압 -5)`;
+          this.triggerEquipProc(this.getEquipSlotKey('titan_greaves'), '🪨 적 공격 -5');
+        }
       }, 300);
+    }
+
+    // 무기 장비: 유성 파쇄 메이스 (턴 종료 시 유성 폭발 10 피해 및 화상 3)
+    if (this.hasEquip('meteor_mace') && this.enemyHp > 0) {
+      setTimeout(() => {
+        soundEngine.playMagicFire();
+        this.dealDamageToEnemy(10, '유성 낙하 폭발', true);
+        this.applyEnemyStatus('burn', 3);
+        this.triggerEquipProc(this.getEquipSlotKey('meteor_mace'), '☄️ 유성 낙하 10 피해!');
+      }, 500);
     }
 
     if (this.enemyHp <= 0) {
@@ -1211,6 +1616,8 @@ class DiceSpireGame {
       }
     }
 
+    this.lastEffectiveEnemyDamage = effectiveDmg;
+
     if (effectiveDmg > 0) {
       this.enemyHp = Math.max(0, this.enemyHp - effectiveDmg);
       const styleClass = isCrit ? 'crit-number' : 'dmg-number';
@@ -1228,7 +1635,25 @@ class DiceSpireGame {
   }
 
   dealDamageToPlayer(dmg) {
-    let effectiveDmg = dmg;
+    let incomingDmg = dmg;
+
+    // 갑옷 장비: 용비늘 붉은 흉갑 (받는 피해 5 절대 감소 & 공격한 적에게 화상 2)
+    if (this.hasEquip('dragon_cuirass')) {
+      incomingDmg = Math.max(1, incomingDmg - 5);
+      this.applyEnemyStatus('burn', 2);
+      this.triggerEquipProc(this.getEquipSlotKey('dragon_cuirass'), '🐉 피해 -5 & 화상 2');
+    }
+
+    // 갑옷 장비: 가시 돋친 흑요석 갑주 (피격 시 현재 방어도만큼 적에게 가시 반격 피해)
+    if (this.hasEquip('spiked_carapace') && this.playerShield > 0) {
+      const reflectDmg = Math.min(this.playerShield, incomingDmg);
+      if (reflectDmg > 0) {
+        this.dealDamageToEnemy(reflectDmg, '가시 반격');
+        this.triggerEquipProc(this.getEquipSlotKey('spiked_carapace'), `🥋 반격 ${reflectDmg}`);
+      }
+    }
+
+    let effectiveDmg = incomingDmg;
     if (this.playerShield > 0) {
       if (this.playerShield >= effectiveDmg) {
         this.playerShield -= effectiveDmg;
@@ -1392,6 +1817,9 @@ class DiceSpireGame {
 
     // 보너스 타로 카드 보충 렌더링
     this.renderTarotRewardSection();
+
+    // 장비 (조커 시스템) 보상 렌더링
+    this.renderEquipmentRewardSection();
 
     this.nextFloorBtn.onclick = () => {
       if (selectedEssence && selectedTargetDieIdx !== null && selectedSlotIdx !== null) {
@@ -1633,6 +2061,163 @@ class DiceSpireGame {
     });
   }
 
+  // ==========================================
+  // 장비 (조커 시스템) 헬퍼 및 렌더링
+  // ==========================================
+  hasEquip(id) {
+    if (!this.equipment) return false;
+    return Object.values(this.equipment).some(item => item && item.id === id);
+  }
+
+  getEquipSlotKey(id) {
+    if (!this.equipment) return null;
+    for (const [key, item] of Object.entries(this.equipment)) {
+      if (item && item.id === id) return key;
+    }
+    return null;
+  }
+
+  triggerEquipProc(slotKey, msg) {
+    if (!this.equipmentSlotsEl || !slotKey) return;
+    const cardEl = this.equipmentSlotsEl.querySelector(`[data-slot-key="${slotKey}"]`);
+    if (cardEl) {
+      cardEl.classList.remove('proc-flash');
+      void cardEl.offsetWidth;
+      cardEl.classList.add('proc-flash');
+      setTimeout(() => cardEl.classList.remove('proc-flash'), 700);
+
+      if (msg) {
+        this.showFloatingText(msg, 'crit-number', cardEl);
+      }
+    }
+  }
+
+  renderEquipmentSlots() {
+    if (!this.equipmentSlotsEl) return;
+    this.equipmentSlotsEl.innerHTML = '';
+
+    EQUIPMENT_SLOT_DEFS.forEach(def => {
+      const item = this.equipment[def.key];
+      const slotEl = document.createElement('div');
+
+      if (!item) {
+        slotEl.className = 'equip-card empty';
+        slotEl.dataset.slotKey = def.key;
+        slotEl.title = `${def.name} 슬롯 (비어있음 - 보상에서 장비 획득 가능)`;
+        slotEl.innerHTML = `
+          <div class="equip-slot-badge">${def.name}</div>
+          <div class="equip-body">
+            <div class="equip-icon">${def.icon}</div>
+            <div class="equip-empty-text">비어있음</div>
+          </div>
+        `;
+      } else {
+        slotEl.className = `equip-card occupied rarity-${item.rarity}`;
+        slotEl.dataset.slotKey = def.key;
+        slotEl.title = `[${def.name}] ${item.name} (${item.rarity.toUpperCase()})\n${item.desc}`;
+        slotEl.innerHTML = `
+          <div class="equip-slot-badge">${def.name}</div>
+          <div class="equip-body">
+            <div class="equip-icon">${item.icon}</div>
+            <div class="equip-name">${item.name}</div>
+            <div class="equip-desc">${item.desc}</div>
+          </div>
+        `;
+      }
+
+      this.equipmentSlotsEl.appendChild(slotEl);
+    });
+  }
+
+  equipItem(item) {
+    let targetSlot = null;
+    if (item.slotType === 'helmet') {
+      targetSlot = 'helmet';
+    } else if (item.slotType === 'armor') {
+      targetSlot = 'armor';
+    } else if (item.slotType === 'legs') {
+      targetSlot = 'legs';
+    } else if (item.slotType === 'weapon') {
+      if (!this.equipment.weapon1) {
+        targetSlot = 'weapon1';
+      } else if (!this.equipment.weapon2) {
+        targetSlot = 'weapon2';
+      } else {
+        // 둘 다 차있으면 weapon1과 교체
+        targetSlot = 'weapon1';
+      }
+    }
+
+    if (targetSlot) {
+      this.equipment[targetSlot] = { ...item };
+      soundEngine.playEnchant();
+      this.renderEquipmentSlots();
+      this.calculateProjections();
+      this.triggerEquipProc(targetSlot, `장착: ${item.name}`);
+      return targetSlot;
+    }
+    return null;
+  }
+
+  renderEquipmentRewardSection() {
+    if (!this.equipmentRewardSection || !this.equipmentRewardOptions) return;
+    this.equipmentRewardOptions.innerHTML = '';
+    if (this.equipmentRewardFeedback) {
+      this.equipmentRewardFeedback.textContent = '새로운 장비(조커)를 선택하여 슬롯에 장착하거나 교체하세요 (선택적)';
+    }
+
+    // 현재 장착되지 않은 장비 중에서 무작위 3개 추천
+    const allEquipKeys = Object.keys(EQUIPMENT_DATA);
+    const availableKeys = allEquipKeys.filter(k => !this.hasEquip(k));
+    const pool = availableKeys.length >= 3 ? availableKeys : allEquipKeys;
+    const shuffled = pool.sort(() => 0.5 - Math.random()).slice(0, 3);
+    let equipChosen = false;
+
+    shuffled.forEach(key => {
+      const item = EQUIPMENT_DATA[key];
+      const cardEl = document.createElement('div');
+      cardEl.className = `equipment-reward-card rarity-${item.rarity}`;
+
+      let slotLabel = item.slotName;
+      if (item.slotType === 'weapon') {
+        const freeW = !this.equipment.weapon1 ? '무기 1' : (!this.equipment.weapon2 ? '무기 2' : '무기 1 교체');
+        slotLabel = `무기 (${freeW})`;
+      } else {
+        const cur = this.equipment[item.slotType];
+        if (cur) {
+          slotLabel = `${item.slotName} (교체: ${cur.name})`;
+        } else {
+          slotLabel = `${item.slotName} (신규 장착)`;
+        }
+      }
+
+      cardEl.innerHTML = `
+        <div class="card-header">
+          <span class="equip-card-name">${item.icon} ${item.name}</span>
+          <span class="equip-rarity-tag">${slotLabel} · ${item.rarity.toUpperCase()}</span>
+        </div>
+        <div class="equip-card-desc">${item.desc}</div>
+      `;
+
+      cardEl.addEventListener('click', () => {
+        if (equipChosen) return;
+        equipChosen = true;
+        const assignedSlot = this.equipItem(item);
+        const slotDef = EQUIPMENT_SLOT_DEFS.find(d => d.key === assignedSlot);
+        const slotDisplayName = slotDef ? slotDef.name : assignedSlot;
+
+        this.equipmentRewardOptions.querySelectorAll('.equipment-reward-card').forEach(c => c.classList.remove('selected'));
+        cardEl.classList.add('selected');
+
+        if (this.equipmentRewardFeedback) {
+          this.equipmentRewardFeedback.textContent = `✨ [${item.name}]을(를) [${slotDisplayName}] 슬롯에 성공적으로 장착했습니다!`;
+        }
+      });
+
+      this.equipmentRewardOptions.appendChild(cardEl);
+    });
+  }
+
   restartGame() {
     this.floor = 1;
     this.gold = 50;
@@ -1641,6 +2226,19 @@ class DiceSpireGame {
     this.tarotInventory = [ { ...TAROT_CARDS.fool }, null ];
     this.tarotBuffs = { attackMultiplier: 1 };
     this.enemyStunned = false;
+
+    // 장비(조커 시스템) 초기화
+    this.equipment = {
+      helmet: { ...EQUIPMENT_DATA.crown },
+      weapon1: { ...EQUIPMENT_DATA.dagger },
+      weapon2: null,
+      armor: null,
+      legs: { ...EQUIPMENT_DATA.gale_boots }
+    };
+    this.turnInBattle = 0;
+    this.lastEffectiveEnemyDamage = 0;
+
+    this.renderEquipmentSlots();
     this.gameOverModal.style.display = 'none';
     this.startBattle();
   }

@@ -499,6 +499,167 @@ body {
 }
 
 /* --------------------------------------------------------------------------
+   장비칸 랙 (발라트로 조커 시스템: 투구 / 무기 2칸 / 갑옷 / 하체)
+   -------------------------------------------------------------------------- */
+.equipment-rack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(12, 17, 30, 0.85);
+  border: 1px solid rgba(251, 191, 36, 0.25);
+  border-radius: var(--radius-md);
+  padding: 8px 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.equipment-rack-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.rack-title {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #fbbf24;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rack-slots-info {
+  font-size: 0.68rem;
+  color: #94a3b8;
+}
+
+.equipment-slots {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+}
+
+.equip-card {
+  height: 74px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 6px 8px;
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  user-select: none;
+  overflow: hidden;
+}
+
+.equip-card.empty {
+  border: 1px dashed rgba(255, 255, 255, 0.16);
+  background: rgba(0, 0, 0, 0.3);
+  color: rgba(148, 163, 184, 0.6);
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+}
+
+.equip-card.occupied {
+  border: 1px solid rgba(251, 191, 36, 0.5);
+  background: linear-gradient(135deg, rgba(20, 26, 46, 0.95), rgba(30, 41, 69, 0.9));
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+}
+
+.equip-card.occupied:hover {
+  transform: translateY(-3px) scale(1.03);
+  border-color: #fde047;
+  box-shadow: 0 8px 20px rgba(251, 191, 36, 0.45);
+  z-index: 5;
+}
+
+.equip-card.rarity-common {
+  border-color: rgba(148, 163, 184, 0.6);
+}
+
+.equip-card.rarity-uncommon {
+  border-color: #38bdf8;
+  background: linear-gradient(135deg, rgba(12, 74, 110, 0.9), rgba(15, 23, 42, 0.95));
+}
+
+.equip-card.rarity-rare {
+  border-color: #fbbf24;
+  background: linear-gradient(135deg, rgba(120, 53, 15, 0.9), rgba(26, 20, 48, 0.95));
+}
+
+.equip-card.rarity-legendary {
+  border-color: #ec4899;
+  background: linear-gradient(135deg, rgba(131, 24, 67, 0.9), rgba(46, 16, 101, 0.95));
+  box-shadow: 0 0 15px rgba(236, 72, 153, 0.4);
+}
+
+.equip-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.equip-part-badge {
+  font-size: 0.62rem;
+  font-weight: 800;
+  color: #94a3b8;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+.equip-rarity-badge {
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: #fbbf24;
+}
+
+.equip-card-main {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.equip-card-icon {
+  font-size: 1.25rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+.equip-card-name {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #f8fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+
+.equip-card-desc {
+  font-size: 0.65rem;
+  color: #cbd5e1;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 조커 발동 번쩍임 (Proc Animation) */
+.equip-card.proc-flash {
+  animation: jokerProcPulse 0.6s ease-out;
+}
+
+@keyframes jokerProcPulse {
+  0% { transform: scale(1); filter: brightness(1); }
+  40% { transform: scale(1.08) translateY(-4px); filter: brightness(1.6); box-shadow: 0 0 25px #fbbf24; }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+
+/* --------------------------------------------------------------------------
    공격 & 방어 분배 존 (Tactical Allocation Zones)
    -------------------------------------------------------------------------- */
 .allocation-section {
@@ -1437,6 +1598,81 @@ body {
 .tarot-reward-feedback {
   font-size: 0.82rem;
   color: #a7f3d0;
+  font-weight: 700;
+  text-align: center;
+  min-height: 1.2rem;
+}
+
+/* --------------------------------------------------------------------------
+   보상 모달: 장비 발견 섹션 (발라트로 조커 스타일)
+   -------------------------------------------------------------------------- */
+.equipment-reward-section {
+  background: rgba(17, 24, 39, 0.8);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: fadeIn 0.2s ease-out;
+  margin-top: 6px;
+}
+
+.equipment-reward-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.equipment-reward-card {
+  background: linear-gradient(135deg, rgba(20, 26, 46, 0.95), rgba(30, 41, 69, 0.9));
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+}
+
+.equipment-reward-card:hover {
+  transform: translateY(-2px);
+  border-color: #fde047;
+  box-shadow: 0 6px 18px rgba(251, 191, 36, 0.45);
+}
+
+.equipment-reward-card.selected {
+  border-color: #22c55e;
+  background: linear-gradient(135deg, rgba(20, 83, 45, 0.95), rgba(22, 101, 52, 0.9));
+  box-shadow: 0 0 16px rgba(34, 197, 94, 0.6);
+}
+
+.equipment-reward-card .equip-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.equipment-reward-card .equip-item-name {
+  font-size: 0.86rem;
+  font-weight: 800;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.equipment-reward-card .equip-item-desc {
+  font-size: 0.72rem;
+  color: #cbd5e1;
+  line-height: 1.35;
+}
+
+.equipment-reward-feedback {
+  font-size: 0.82rem;
+  color: #fbbf24;
   font-weight: 700;
   text-align: center;
   min-height: 1.2rem;

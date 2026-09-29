@@ -104,6 +104,17 @@
       </section>
     </main>
 
+    <!-- 장비칸 (발라트로 조커 시스템: 투구 / 무기 2칸 / 갑옷 / 하체) -->
+    <section class="equipment-rack" id="equipmentRack">
+      <div class="equipment-rack-header">
+        <span class="rack-title">⚔️ 장비 (발라트로 조커 패시브 효과)</span>
+        <span class="rack-slots-info">투구 1 · 무기 2 · 갑옷 1 · 하체 1</span>
+      </div>
+      <div class="equipment-slots" id="equipmentSlots">
+        <!-- 5개의 슬롯 (JS에서 동적 렌더링) -->
+      </div>
+    </section>
+
     <!-- 하단 영역: 스킬 카드 덱 & 주사위 트레이 -->
       <!-- 공격 & 방어 분배 존 (스킬 슬롯 대신 드래그 앤 드롭 할당) -->
       <div class="allocation-section">
@@ -229,6 +240,15 @@
           <!-- 타로 카드 보충 카드 -->
         </div>
         <div class="tarot-reward-feedback" id="tarotRewardFeedback"></div>
+      </div>
+
+      <!-- 신규: 장비 발견 및 장착 섹션 (발라트로 조커 스타일) -->
+      <div class="equipment-reward-section" id="equipmentRewardSection">
+        <div class="step-label">⚔️ 전리품 장비 발견 (발라트로 조커 스타일)</div>
+        <div class="equipment-reward-options" id="equipmentRewardOptions">
+          <!-- 장비 선택 카드 -->
+        </div>
+        <div class="equipment-reward-feedback" id="equipmentRewardFeedback"></div>
       </div>
 
       <div class="modal-footer">
