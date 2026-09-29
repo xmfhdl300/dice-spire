@@ -216,7 +216,7 @@ class DiceSpireGame {
     this.startBattle();
   }
 
-  // 5개의 완전히 독립된 주사위 초기화
+  // 5개의 완전히 독립된 주사위 초기화 (각 주사위는 6개의 개별 슬롯을 가짐)
   createInitialDiceCollection() {
     const collection = [];
     for (let i = 0; i < 5; i++) {
@@ -224,12 +224,19 @@ class DiceSpireGame {
         index: i,
         name: `D${i + 1}`,
         fullName: `${i + 1}번 주사위`,
-        faces: { 1: null, 2: null, 3: null, 4: null, 5: null, 6: null }
+        slots: [
+          { slot: 1, value: 1, enchant: null },
+          { slot: 2, value: 2, enchant: null },
+          { slot: 3, value: 3, enchant: null },
+          { slot: 4, value: 4, enchant: null },
+          { slot: 5, value: 5, enchant: null },
+          { slot: 6, value: 6, enchant: null }
+        ]
       };
 
       // 초기 시작 선물: 1번 주사위의 1번 면에 불꽃 1 지급
       if (i === 0) {
-        dieData.faces[1] = { ...ENCHANT_TYPES.flame, face: 1 };
+        dieData.slots[0].enchant = { ...ENCHANT_TYPES.flame, face: 1 };
       }
 
       collection.push(dieData);
@@ -289,11 +296,14 @@ class DiceSpireGame {
     this.quickDefenseBtn = document.getElementById('quickDefenseBtn');
     this.endTurnBtn = document.getElementById('endTurnBtn');
 
-    // 보상 모달 2단계 엘리먼트
+    // 보상 모달 3단계 엘리먼트 (중복 숫자 배치 지원)
     this.rewardModal = document.getElementById('rewardModal');
     this.rewardOptionsEl = document.getElementById('rewardOptions');
     this.targetDieSection = document.getElementById('targetDieSection');
     this.targetDiceSelector = document.getElementById('targetDiceSelector');
+    this.targetSlotSection = document.getElementById('targetSlotSection');
+    this.targetSlotSelector = document.getElementById('targetSlotSelector');
+    this.slotPreviewDesc = document.getElementById('slotPreviewDesc');
     this.skipRewardBtn = document.getElementById('skipRewardBtn');
     this.nextFloorBtn = document.getElementById('nextFloorBtn');
 
@@ -482,7 +492,7 @@ class DiceSpireGame {
     this.updateStatsUI();
   }
 
-  // 5개의 주사위가 각각 자신의 6개 면을 참조하여 굴려짐
+  // 5개의 주사위가 각각 자신의 6개 슬롯 중 하나를 무작위로 뽑음 (중복 숫자 완벽 반영)
   rollIndependentDice() {
     soundEngine.playDiceRoll();
     this.diceList = [];
@@ -490,13 +500,16 @@ class DiceSpireGame {
 
     for (let i = 0; i < this.DICE_COUNT; i++) {
       const dieSystem = this.diceCollection[i];
-      const val = Math.floor(Math.random() * 6) + 1;
-      const enchant = dieSystem.faces[val] || null;
+      const slotIndex = Math.floor(Math.random() * 6);
+      const rolledSlot = dieSystem.slots[slotIndex];
+      const val = rolledSlot.value;
+      const enchant = rolledSlot.enchant;
 
       this.diceList.push({
         id: `die_${Date.now()}_${i}`,
         dieIndex: i, // 0 to 4 (D1 ~ D5)
         dieName: dieSystem.name,
+        slotIndex: slotIndex,
         value: val,
         enchant: enchant,
         zone: 'pool',
@@ -524,9 +537,11 @@ class DiceSpireGame {
     soundEngine.playDiceRoll();
     poolDice.forEach(d => {
       const dieSystem = this.diceCollection[d.dieIndex];
-      const val = Math.floor(Math.random() * 6) + 1;
-      d.value = val;
-      d.enchant = dieSystem.faces[val] || null;
+      const slotIndex = Math.floor(Math.random() * 6);
+      const rolledSlot = dieSystem.slots[slotIndex];
+      d.slotIndex = slotIndex;
+      d.value = rolledSlot.value;
+      d.enchant = rolledSlot.enchant;
     });
 
     this.selectedDieIndex = null;
@@ -680,25 +695,32 @@ class DiceSpireGame {
       6: [[1, 1], [1, 3], [2, 1], [2, 3], [3, 1], [3, 3]]
     };
 
-    const positions = pipPositions[value] || [];
-    positions.forEach(([row, col]) => {
-      const pip = document.createElement('div');
-      pip.className = 'pip';
-      pip.style.gridRow = row;
-      pip.style.gridColumn = col;
-      dieEl.appendChild(pip);
-    });
+    const positions = pipPositions[value];
+    if (positions) {
+      positions.forEach(([row, col]) => {
+        const pip = document.createElement('div');
+        pip.className = 'pip';
+        pip.style.gridRow = row;
+        pip.style.gridColumn = col;
+        dieEl.appendChild(pip);
+      });
+    } else {
+      const numSpan = document.createElement('span');
+      numSpan.className = 'die-number-fallback';
+      numSpan.textContent = value;
+      dieEl.appendChild(numSpan);
+    }
   }
 
   // ==========================================
-  // 상단 인스펙터: 선택된 주사위의 6면 렌더링
+  // 상단 인스펙터: 선택된 주사위의 6면(슬롯) 렌더링
   // ==========================================
   renderDiceFacesStrip() {
     this.diceFacesStrip.innerHTML = '';
     const currentDie = this.diceCollection[this.inspectedDieIndex];
 
-    for (let faceNum = 1; faceNum <= 6; faceNum++) {
-      const enchant = currentDie.faces[faceNum];
+    currentDie.slots.forEach((slotData, sIdx) => {
+      const enchant = slotData.enchant;
       const slotEl = document.createElement('div');
       const slotClass = enchant ? enchant.slotClass : '';
       slotEl.className = `face-preview-slot ${slotClass}`;
@@ -706,16 +728,16 @@ class DiceSpireGame {
       if (enchant) {
         slotEl.innerHTML = `
           <span class="face-icon">${enchant.icon}</span>
-          <span>${faceNum}</span>
+          <span>${slotData.value}</span>
         `;
-        slotEl.title = `[${currentDie.fullName}] ${faceNum}번 면: [${enchant.name} ${faceNum}]\n공격: ${enchant.attackText}\n방어: ${enchant.defenseText}`;
+        slotEl.title = `[${currentDie.fullName}] ${sIdx + 1}번 면: [${enchant.name} ${slotData.value}]\n공격: ${enchant.attackText}\n방어: ${enchant.defenseText}`;
       } else {
-        slotEl.innerHTML = `<span>${faceNum}</span>`;
-        slotEl.title = `[${currentDie.fullName}] ${faceNum}번 면: 일반`;
+        slotEl.innerHTML = `<span>${slotData.value}</span>`;
+        slotEl.title = `[${currentDie.fullName}] ${sIdx + 1}번 면: 일반 (${slotData.value})`;
       }
 
       this.diceFacesStrip.appendChild(slotEl);
-    }
+    });
   }
 
   // ==========================================
@@ -1102,15 +1124,22 @@ class DiceSpireGame {
     this.rewardOptionsEl.innerHTML = '';
     this.targetDieSection.style.display = 'none';
     this.targetDiceSelector.innerHTML = '';
+    this.targetSlotSection.style.display = 'none';
+    this.targetSlotSelector.innerHTML = '';
+    if (this.slotPreviewDesc) this.slotPreviewDesc.textContent = '';
     this.nextFloorBtn.disabled = true;
 
     // 1단계: 3개의 무작위 원소 면(Face + Element) 선택지 생성
-    // 예: [불꽃 1], [암흑 5], [신성 3]
-    const faces = [1, 2, 3, 4, 5, 6].sort(() => 0.5 - Math.random()).slice(0, 3);
-    const elementKeys = Object.keys(ENCHANT_TYPES).sort(() => 0.5 - Math.random());
+    // 1~6 무작위 숫자 (중복 숫자도 자연스럽게 등장 가능!)
+    const randomFaceNumbers = [
+      Math.floor(Math.random() * 6) + 1,
+      Math.floor(Math.random() * 6) + 1,
+      Math.floor(Math.random() * 6) + 1
+    ];
+    const elementKeys = Object.keys(ENCHANT_TYPES);
 
-    const options = faces.map((faceNum, idx) => {
-      const elemKey = elementKeys[idx % elementKeys.length];
+    const options = randomFaceNumbers.map((faceNum) => {
+      const elemKey = elementKeys[Math.floor(Math.random() * elementKeys.length)];
       const enchantDef = ENCHANT_TYPES[elemKey];
       return {
         face: faceNum,
@@ -1120,6 +1149,7 @@ class DiceSpireGame {
 
     let selectedEssence = null;
     let selectedTargetDieIdx = null;
+    let selectedSlotIdx = null;
 
     options.forEach(opt => {
       const cardEl = document.createElement('div');
@@ -1127,7 +1157,7 @@ class DiceSpireGame {
       cardEl.innerHTML = `
         <div class="card-header">
           <span class="card-title">${opt.enchant.icon} ${opt.enchant.name} ${opt.face}</span>
-          <span class="enchant-face-badge">[ ${opt.face}번 면 각인 ]</span>
+          <span class="enchant-face-badge">[ 숫자 ${opt.face} 각인 ]</span>
         </div>
         <div style="font-size: 0.8rem; margin: 8px 0; line-height: 1.4;">
           <p style="color: #fca5a5;">⚔️ <strong>공격:</strong> ${opt.enchant.attackText}</p>
@@ -1139,12 +1169,24 @@ class DiceSpireGame {
         this.rewardOptionsEl.querySelectorAll('.reward-card').forEach(c => c.classList.remove('selected-reward'));
         cardEl.classList.add('selected-reward');
         selectedEssence = opt;
+        selectedTargetDieIdx = null;
+        selectedSlotIdx = null;
+        this.targetSlotSection.style.display = 'none';
+        if (this.slotPreviewDesc) this.slotPreviewDesc.textContent = '';
+        this.nextFloorBtn.disabled = true;
         soundEngine.playDiceSlot();
 
         // 2단계: 대상 주사위 (D1 ~ D5) 선택기 활성화
         this.renderTargetDiceSelector(selectedEssence, (targetDieIdx) => {
           selectedTargetDieIdx = targetDieIdx;
-          this.nextFloorBtn.disabled = false;
+          selectedSlotIdx = null;
+          this.nextFloorBtn.disabled = true;
+
+          // 3단계: 선택된 주사위의 6개 면 중 교체할 면(슬롯) 선택 활성화 (중복 숫자 배치 가능)
+          this.renderTargetSlotSelector(selectedTargetDieIdx, selectedEssence, (slotIdx) => {
+            selectedSlotIdx = slotIdx;
+            this.nextFloorBtn.disabled = false;
+          });
         });
       });
 
@@ -1152,11 +1194,16 @@ class DiceSpireGame {
     });
 
     this.nextFloorBtn.onclick = () => {
-      if (selectedEssence && selectedTargetDieIdx !== null) {
+      if (selectedEssence && selectedTargetDieIdx !== null && selectedSlotIdx !== null) {
         soundEngine.playEnchant();
 
-        // 선택한 주사위 1개의 해당 면만 독립적으로 각인!
-        this.diceCollection[selectedTargetDieIdx].faces[selectedEssence.face] = selectedEssence.enchant;
+        // 선택한 주사위의 해당 슬롯을 새 숫자와 원소 각인으로 덮어쓰기 (중복 숫자 허용!)
+        const targetDie = this.diceCollection[selectedTargetDieIdx];
+        targetDie.slots[selectedSlotIdx] = {
+          slot: selectedSlotIdx + 1,
+          value: selectedEssence.face,
+          enchant: selectedEssence.enchant
+        };
 
         // 인스펙터를 방금 강화한 주사위로 전환하여 즉시 눈으로 확인 가능
         this.setInspectedDie(selectedTargetDieIdx);
@@ -1170,17 +1217,17 @@ class DiceSpireGame {
   renderTargetDiceSelector(essence, onSelect) {
     this.targetDieSection.style.display = 'flex';
     this.targetDiceSelector.innerHTML = '';
+    this.targetSlotSection.style.display = 'none';
     this.nextFloorBtn.disabled = true;
 
     this.diceCollection.forEach((die, idx) => {
-      const currentFace = die.faces[essence.face];
-      const curDesc = currentFace ? `${currentFace.icon}${currentFace.name}` : '일반';
+      const valuesList = die.slots.map(s => s.value).join(', ');
 
       const btn = document.createElement('div');
       btn.className = 'target-die-btn';
       btn.innerHTML = `
         <span class="die-name">🎲 ${die.name}</span>
-        <span class="current-face-status">${essence.face}번면: ${curDesc}</span>
+        <span class="current-face-status">[${valuesList}]</span>
       `;
 
       btn.addEventListener('click', () => {
@@ -1191,6 +1238,55 @@ class DiceSpireGame {
       });
 
       this.targetDiceSelector.appendChild(btn);
+    });
+  }
+
+  // 3단계: 교체할 슬롯(1~6번 면) 선택 (중복 숫자 자유 배치)
+  renderTargetSlotSelector(dieIndex, essence, onSelect) {
+    this.targetSlotSection.style.display = 'flex';
+    this.targetSlotSelector.innerHTML = '';
+    if (this.slotPreviewDesc) {
+      this.slotPreviewDesc.textContent = '교체할 주사위 면을 선택하세요. 어떤 숫자든 자유롭게 중복 배치할 수 있습니다!';
+    }
+
+    const die = this.diceCollection[dieIndex];
+
+    die.slots.forEach((slot, sIdx) => {
+      const curIcon = slot.enchant ? slot.enchant.icon : '';
+      const slotClass = slot.enchant ? slot.enchant.slotClass : '';
+
+      const btn = document.createElement('div');
+      btn.className = `target-slot-btn ${slotClass}`;
+      btn.innerHTML = `
+        <span class="slot-idx-tag">${sIdx + 1}번면</span>
+        <span class="slot-val-display">${curIcon} ${slot.value}</span>
+      `;
+
+      btn.addEventListener('click', () => {
+        this.targetSlotSelector.querySelectorAll('.target-slot-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        soundEngine.playDiceSlot();
+
+        // 중복 계산 안내 메시지
+        const targetNumber = essence.face;
+        const currentCount = die.slots.filter((s, i) => i !== sIdx && s.value === targetNumber).length;
+        const newTotalCount = currentCount + 1;
+
+        let duplicateMsg = '';
+        if (newTotalCount > 1) {
+          duplicateMsg = ` 🔥 중복 완성! 이제 [${die.name}]에 숫자 ${targetNumber}이(가) 총 ${newTotalCount}개가 됩니다!`;
+        } else {
+          duplicateMsg = ` (${die.name}의 ${sIdx + 1}번 면이 숫자 ${targetNumber}으로 교체됩니다)`;
+        }
+
+        if (this.slotPreviewDesc) {
+          this.slotPreviewDesc.textContent = `[${sIdx + 1}번면: ${curIcon}${slot.value}] ➡️ [${essence.enchant.icon}${essence.enchant.name} ${targetNumber}] 교체!${duplicateMsg}`;
+        }
+
+        onSelect(sIdx);
+      });
+
+      this.targetSlotSelector.appendChild(btn);
     });
   }
 
