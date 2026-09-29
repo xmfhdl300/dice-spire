@@ -1830,7 +1830,8 @@ class DiceSpireGame {
       const enchantDef = ENCHANT_TYPES[elemKey];
       return {
         face: faceNum,
-        enchant: { ...enchantDef, face: faceNum }
+        enchant: { ...enchantDef, face: faceNum },
+        rerolled: false
       };
     });
 
@@ -1850,7 +1851,57 @@ class DiceSpireGame {
           <p style="color: #fca5a5;">⚔️ <strong>공격:</strong> ${opt.enchant.attackText}</p>
           <p style="color: #bae6fd; margin-top: 4px;">🛡️ <strong>방어:</strong> ${opt.enchant.defenseText}</p>
         </div>
+        <div class="reward-card-actions">
+          <button class="reward-card-reroll-btn ${opt.rerolled ? 'used' : ''}" type="button" ${opt.rerolled ? 'disabled' : ''}>
+            <span>${opt.rerolled ? '✓' : '🎲'}</span>
+            <span>${opt.rerolled ? '리롤 완료' : '개별 리롤 (1회)'}</span>
+          </button>
+        </div>
       `;
+
+      // 선택지별 1회 리롤 이벤트 바인딩
+      const rerollBtn = cardEl.querySelector('.reward-card-reroll-btn');
+      rerollBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (opt.rerolled) return;
+
+        opt.rerolled = true;
+        soundEngine.playDiceRoll();
+
+        // 1~6 무작위 숫자 및 무작위 원소 각인 재추첨
+        const newFace = Math.floor(Math.random() * 6) + 1;
+        const newElemKey = elementKeys[Math.floor(Math.random() * elementKeys.length)];
+        const newEnchantDef = ENCHANT_TYPES[newElemKey];
+        opt.face = newFace;
+        opt.enchant = { ...newEnchantDef, face: newFace };
+
+        // 카드 외관 및 내용 실시간 갱신
+        const isSelected = (selectedEssence === opt);
+        cardEl.className = `reward-card enchant-card ${opt.enchant.colorClass} ${isSelected ? 'selected-reward' : ''} reroll-pulse`;
+        cardEl.querySelector('.card-header').innerHTML = `
+          <span class="card-title">${opt.enchant.icon} ${opt.enchant.name} ${opt.face}</span>
+          <span class="enchant-face-badge">[ 숫자 ${opt.face} 각인 ]</span>
+        `;
+        cardEl.querySelector('div[style*="font-size: 0.8rem"]').innerHTML = `
+          <p style="color: #fca5a5;">⚔️ <strong>공격:</strong> ${opt.enchant.attackText}</p>
+          <p style="color: #bae6fd; margin-top: 4px;">🛡️ <strong>방어:</strong> ${opt.enchant.defenseText}</p>
+        `;
+
+        rerollBtn.className = 'reward-card-reroll-btn used';
+        rerollBtn.disabled = true;
+        rerollBtn.innerHTML = `
+          <span>✓</span>
+          <span>리롤 완료</span>
+        `;
+
+        // 이 카드가 이미 선택되어 있는 상태라면 후속 단계 미리보기 실시간 갱신
+        if (isSelected && selectedTargetDieIdx !== null) {
+          this.renderTargetSlotSelector(selectedTargetDieIdx, selectedEssence, (slotIdx) => {
+            selectedSlotIdx = slotIdx;
+            this.nextFloorBtn.disabled = false;
+          });
+        }
+      });
 
       cardEl.addEventListener('click', () => {
         this.rewardOptionsEl.querySelectorAll('.reward-card').forEach(c => c.classList.remove('selected-reward'));
