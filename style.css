@@ -746,6 +746,121 @@ body {
 }
 
 /* --------------------------------------------------------------------------
+   소비 아이템: 타로 카드 슬롯 (2칸)
+   -------------------------------------------------------------------------- */
+.tarot-consumables-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  border-radius: var(--radius-md);
+  padding: 8px 14px;
+  min-width: 250px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.tarot-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tarot-title {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #d8b4fe;
+  letter-spacing: 0.5px;
+}
+
+.tarot-hint {
+  font-size: 0.68rem;
+  color: #94a3b8;
+}
+
+.tarot-slots {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.tarot-slot {
+  width: 110px;
+  height: 58px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  user-select: none;
+}
+
+.tarot-slot.empty {
+  border: 1px dashed rgba(168, 85, 247, 0.3);
+  background: rgba(0, 0, 0, 0.25);
+  color: rgba(148, 163, 184, 0.6);
+  font-size: 0.75rem;
+  font-weight: 600;
+  gap: 2px;
+}
+
+.tarot-slot.occupied {
+  border: 1px solid #fbbf24;
+  background: linear-gradient(135deg, rgba(46, 16, 101, 0.95), rgba(76, 29, 149, 0.9));
+  box-shadow: 0 4px 14px rgba(168, 85, 247, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  color: #f1f5f9;
+  padding: 4px;
+}
+
+.tarot-slot.occupied:hover {
+  transform: translateY(-3px) scale(1.04);
+  border-color: #fde047;
+  box-shadow: 0 8px 20px rgba(251, 191, 36, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.4);
+}
+
+.tarot-slot-num {
+  position: absolute;
+  top: 2px;
+  left: 6px;
+  font-size: 0.62rem;
+  font-family: 'Cinzel', serif;
+  font-weight: 900;
+  color: #fbbf24;
+}
+
+.tarot-slot-body {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 3px;
+}
+
+.tarot-slot-icon {
+  font-size: 1.15rem;
+}
+
+.tarot-slot-name {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.2px;
+}
+
+.tarot-slot-use-tag {
+  font-size: 0.6rem;
+  background: rgba(251, 191, 36, 0.2);
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  color: #fef08a;
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin-top: 2px;
+  font-weight: 700;
+}
+
+/* --------------------------------------------------------------------------
    주사위 스타일 (Realistic 3D Cube Look)
    -------------------------------------------------------------------------- */
 .die {
@@ -1250,6 +1365,81 @@ body {
   font-weight: 900;
   color: #fff;
   z-index: 2;
+}
+
+/* --------------------------------------------------------------------------
+   보상 모달: 타로 카드 보충 섹션
+   -------------------------------------------------------------------------- */
+.tarot-reward-section {
+  background: rgba(46, 16, 101, 0.35);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: fadeIn 0.2s ease-out;
+  margin-top: 6px;
+}
+
+.tarot-reward-options {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.tarot-reward-card {
+  background: linear-gradient(135deg, rgba(30, 27, 75, 0.9), rgba(49, 46, 129, 0.85));
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: relative;
+}
+
+.tarot-reward-card:hover {
+  transform: translateY(-2px);
+  border-color: #fde047;
+  box-shadow: 0 6px 18px rgba(251, 191, 36, 0.4);
+}
+
+.tarot-reward-card.selected {
+  border-color: #22c55e;
+  background: linear-gradient(135deg, rgba(20, 83, 45, 0.9), rgba(22, 101, 52, 0.85));
+  box-shadow: 0 0 16px rgba(34, 197, 94, 0.6);
+}
+
+.tarot-reward-card .card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tarot-reward-card .tarot-card-name {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #fef08a;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tarot-reward-card .tarot-card-desc {
+  font-size: 0.74rem;
+  color: #e2e8f0;
+  line-height: 1.35;
+}
+
+.tarot-reward-feedback {
+  font-size: 0.82rem;
+  color: #a7f3d0;
+  font-weight: 700;
+  text-align: center;
+  min-height: 1.2rem;
 }
 
 .modal-footer {

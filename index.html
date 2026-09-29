@@ -169,6 +169,17 @@
           </div>
         </div>
 
+        <!-- 소비 아이템: 타로 카드 슬롯 2칸 -->
+        <div class="tarot-consumables-container" id="tarotConsumablesContainer">
+          <div class="tarot-header">
+            <span class="tarot-title">🎴 타로 카드 (<span id="tarotCount">0</span>/2)</span>
+            <span class="tarot-hint">클릭 시 즉시 발동</span>
+          </div>
+          <div class="tarot-slots" id="tarotSlots">
+            <!-- 2개의 타로 카드 슬롯 -->
+          </div>
+        </div>
+
         <!-- 행동 실행 및 턴 종료 버튼 -->
         <div class="turn-actions">
           <button id="endTurnBtn" class="end-turn-button">
@@ -184,8 +195,8 @@
   <div id="rewardModal" class="modal-overlay" style="display: none;">
     <div class="modal-card enchant-modal-card">
       <div class="modal-header">
-        <h2 class="modal-title">✨ 주사위 1면 원소 각인</h2>
-        <p class="modal-desc">원하는 원소 면을 선택한 후, 각인할 대상 주사위(D1~D5)를 지정하세요.</p>
+        <h2 class="modal-title">✨ 주사위 1면 원소 각인 &amp; 타로 카드</h2>
+        <p class="modal-desc">원하는 원소 면을 각인하고, 필요 시 타로 카드를 보충하세요.</p>
       </div>
 
       <!-- 1단계: 원소 면 선택 (불꽃 1 / 암흑 5 / 신성 3 등) -->
@@ -209,6 +220,15 @@
           <!-- 1번면 ~ 6번면 슬롯 선택 버튼들 -->
         </div>
         <div class="slot-preview-desc" id="slotPreviewDesc"></div>
+      </div>
+
+      <!-- 보너스: 타로 카드 보충 섹션 -->
+      <div class="tarot-reward-section" id="tarotRewardSection">
+        <div class="step-label">🎴 보너스 타로 카드 보충 (최대 2장 소지 가능)</div>
+        <div class="tarot-reward-options" id="tarotRewardOptions">
+          <!-- 타로 카드 보충 카드 -->
+        </div>
+        <div class="tarot-reward-feedback" id="tarotRewardFeedback"></div>
       </div>
 
       <div class="modal-footer">

@@ -108,7 +108,172 @@ const ENCHANT_TYPES = {
 };
 
 // ==========================================
-// 2. 몬스터 풀 (층별 난이도)
+// 2. 소비 아이템: 타로 카드 (Tarot Cards) 정의 (2칸 슬롯 전용)
+// ==========================================
+const TAROT_CARDS = {
+  fool: {
+    id: 'fool',
+    num: '0',
+    name: '광대',
+    subName: 'The Fool',
+    icon: '🃏',
+    desc: '모든 미할당 주사위의 눈금을 즉시 +1 증가시키고 재굴림 횟수 +1 충전',
+    use: (game) => {
+      let boosted = 0;
+      game.diceList.filter(d => d.zone === 'pool').forEach(d => {
+        if (d.value < 6) {
+          d.value++;
+          boosted++;
+        }
+      });
+      game.rerollsLeft++;
+      game.rerollAbilityBtn.textContent = `🎲 재굴림 (${game.rerollsLeft})`;
+      game.rerollAbilityBtn.disabled = false;
+      game.renderAllDice();
+      game.calculateProjections();
+      game.showFloatingText('+1 눈금 & 재굴림!', 'heal-number', game.playerAreaEl);
+      game.battleMessage.textContent = '🃏 [광대] 발동! 주사위 눈금이 +1 상승하고 재굴림 기회를 1회 얻었습니다!';
+    }
+  },
+  magician: {
+    id: 'magician',
+    num: 'I',
+    name: '마법사',
+    subName: 'The Magician',
+    icon: '🪄',
+    desc: '이번 턴 미할당 주사위 2개에 🔥 불꽃 각인(화염+4)을 즉시 부여',
+    use: (game) => {
+      const poolDice = game.diceList.filter(d => d.zone === 'pool');
+      const targets = poolDice.slice(0, 2);
+      targets.forEach(d => {
+        d.enchant = { ...ENCHANT_TYPES.flame, face: d.value };
+      });
+      game.renderAllDice();
+      game.calculateProjections();
+      soundEngine.playMagicFire();
+      game.showFloatingText('🔥 불꽃 부여!', 'crit-number', game.playerAreaEl);
+      game.battleMessage.textContent = '🪄 [마법사] 발동! 주사위에 불꽃 원소 마법이 깃들었습니다!';
+    }
+  },
+  priestess: {
+    id: 'priestess',
+    num: 'II',
+    name: '여사제',
+    subName: 'High Priestess',
+    icon: '🌙',
+    desc: '체력을 14 즉시 치유하고 방어도 +8 획득',
+    use: (game) => {
+      game.healPlayer(14);
+      game.addPlayerShield(8);
+      soundEngine.playMagicFire();
+      game.battleMessage.textContent = '🌙 [여사제] 발동! 체력 14 회복 및 방어도 +8을 얻었습니다!';
+    }
+  },
+  empress: {
+    id: 'empress',
+    num: 'III',
+    name: '여황제',
+    subName: 'The Empress',
+    icon: '👑',
+    desc: '이번 턴 공격 존의 최종 피해량을 1.5배로 폭발 증폭',
+    use: (game) => {
+      game.tarotBuffs.attackMultiplier = (game.tarotBuffs.attackMultiplier || 1) * 1.5;
+      game.calculateProjections();
+      soundEngine.playEnchant();
+      game.showFloatingText('⚔️ 공격 1.5배!', 'crit-number', game.playerAreaEl);
+      game.battleMessage.textContent = '👑 [여황제] 발동! 이번 턴 총 공격력이 1.5배로 강력해집니다!';
+    }
+  },
+  emperor: {
+    id: 'emperor',
+    num: 'IV',
+    name: '황제',
+    subName: 'The Emperor',
+    icon: '🏛️',
+    desc: '적의 모든 방패를 일격에 파괴하고 체력에 관통 8 피해',
+    use: (game) => {
+      const shieldBroke = game.enemyShield;
+      game.enemyShield = 0;
+      game.enemyHp = Math.max(0, game.enemyHp - 8);
+      soundEngine.playCrit();
+      if (shieldBroke > 0) {
+        game.showFloatingText(`방패파괴 (-${shieldBroke})`, 'shield-number', game.enemyAreaEl);
+      }
+      game.showFloatingText('-8 관통!', 'crit-number', game.enemyAreaEl);
+      game.updateStatsUI();
+      game.battleMessage.textContent = '🏛️ [황제] 발동! 적의 방패를 분쇄하고 8의 관통 피해를 입혔습니다!';
+    }
+  },
+  chariot: {
+    id: 'chariot',
+    num: 'VII',
+    name: '전차',
+    subName: 'The Chariot',
+    icon: '🛡️',
+    desc: '철벽의 성채를 세워 방어도 +18 획득',
+    use: (game) => {
+      game.addPlayerShield(18);
+      soundEngine.playEnchant();
+      game.battleMessage.textContent = '🛡️ [전차] 발동! 강력한 철벽 방어도 +18을 둘렀습니다!';
+    }
+  },
+  death: {
+    id: 'death',
+    num: 'XIII',
+    name: '사신',
+    subName: 'Death',
+    icon: '☠️',
+    desc: '적에게 14의 암흑 피해를 입히고 체력 6 흡혈',
+    use: (game) => {
+      game.dealDamageToEnemy(14, '사신의 수확');
+      game.healPlayer(6);
+      soundEngine.playCrit();
+      game.battleMessage.textContent = '☠️ [사신] 발동! 적의 생명력을 14 수확하고 6 회복했습니다!';
+    }
+  },
+  sun: {
+    id: 'sun',
+    num: 'XIX',
+    name: '태양',
+    subName: 'The Sun',
+    icon: '☀️',
+    desc: '이번 턴 모든 미할당 주사위의 눈금을 최고 눈금인 [6]으로 변환!',
+    use: (game) => {
+      const poolDice = game.diceList.filter(d => d.zone === 'pool');
+      poolDice.forEach(d => {
+        d.value = 6;
+      });
+      game.renderAllDice();
+      game.calculateProjections();
+      soundEngine.playVictory();
+      game.showFloatingText('☀️ 전체 6으로 변환!', 'crit-number', game.playerAreaEl);
+      game.battleMessage.textContent = '☀️ [태양] 발동! 모든 미할당 주사위가 눈금 6으로 빛납니다!';
+    }
+  },
+  world: {
+    id: 'world',
+    num: 'XXI',
+    name: '세계',
+    subName: 'The World',
+    icon: '🪐',
+    desc: '적을 1턴간 완전히 기절(스턴)시켜 다음 적의 행동을 무효화',
+    use: (game) => {
+      game.enemyStunned = true;
+      if (game.enemyIntentText) {
+        game.enemyIntentText.textContent = '기절 상태 (행동 불가)';
+      }
+      if (game.enemyIntentIcon) {
+        game.enemyIntentIcon.textContent = '💫';
+      }
+      soundEngine.playEnchant();
+      game.showFloatingText('💫 적 기절!', 'crit-number', game.enemyAreaEl);
+      game.battleMessage.textContent = '🪐 [세계] 발동! 적이 기절하여 이번 턴에 행동하지 못합니다!';
+    }
+  }
+};
+
+// ==========================================
+// 3. 몬스터 풀 (층별 난이도)
 // ==========================================
 const MONSTERS = [
   {
@@ -211,6 +376,11 @@ class DiceSpireGame {
     this.isPlayerTurn = true;
     this.isActionLocked = false;
 
+    // 소비 아이템: 타로 카드 2칸 인벤토리 (시작 시 1장 지급)
+    this.tarotInventory = [ { ...TAROT_CARDS.fool }, null ];
+    this.tarotBuffs = { attackMultiplier: 1 };
+    this.enemyStunned = false;
+
     this.initElements();
     this.bindEvents();
     this.startBattle();
@@ -296,6 +466,10 @@ class DiceSpireGame {
     this.quickDefenseBtn = document.getElementById('quickDefenseBtn');
     this.endTurnBtn = document.getElementById('endTurnBtn');
 
+    // 소비 아이템: 타로 카드 2칸 슬롯 엘리먼트
+    this.tarotSlotsEl = document.getElementById('tarotSlots');
+    this.tarotCountEl = document.getElementById('tarotCount');
+
     // 보상 모달 3단계 엘리먼트 (중복 숫자 배치 지원)
     this.rewardModal = document.getElementById('rewardModal');
     this.rewardOptionsEl = document.getElementById('rewardOptions');
@@ -304,6 +478,9 @@ class DiceSpireGame {
     this.targetSlotSection = document.getElementById('targetSlotSection');
     this.targetSlotSelector = document.getElementById('targetSlotSelector');
     this.slotPreviewDesc = document.getElementById('slotPreviewDesc');
+    this.tarotRewardSection = document.getElementById('tarotRewardSection');
+    this.tarotRewardOptions = document.getElementById('tarotRewardOptions');
+    this.tarotRewardFeedback = document.getElementById('tarotRewardFeedback');
     this.skipRewardBtn = document.getElementById('skipRewardBtn');
     this.nextFloorBtn = document.getElementById('nextFloorBtn');
 
@@ -458,6 +635,7 @@ class DiceSpireGame {
     this.enemyStatuses = { burn: 0, poison: 0, weak: 0 };
     this.playerStatuses = { weak: 0 };
     this.currentIntentIndex = 0;
+    this.enemyStunned = false;
 
     this.floorBadge.textContent = `층: ${this.floor}F (${this.currentEnemy.tier})`;
     this.enemyNameEl.textContent = this.currentEnemy.name;
@@ -465,6 +643,7 @@ class DiceSpireGame {
     this.enemySpriteEl.textContent = this.currentEnemy.sprite;
 
     this.renderDiceFacesStrip();
+    this.renderTarotSlots();
     this.updateStatsUI();
     this.startPlayerTurn();
   }
@@ -475,16 +654,18 @@ class DiceSpireGame {
   startPlayerTurn() {
     this.isPlayerTurn = true;
     this.isActionLocked = false;
+    this.tarotBuffs = { attackMultiplier: 1 };
     this.turnIndicator.textContent = '당신의 턴';
     this.turnIndicator.style.color = 'var(--accent-cyan)';
     this.endTurnBtn.disabled = false;
-    this.battleMessage.textContent = '독립된 5개의 주사위를 굴렸습니다. 공격 존과 방어 존에 배분하세요!';
+    this.battleMessage.textContent = '주사위를 공격/방어 존에 분배하거나 타로 카드를 사용하세요!';
 
     this.playerShield = 0;
     this.rerollsLeft = this.baseRerolls;
     this.rerollAbilityBtn.disabled = false;
     this.rerollAbilityBtn.textContent = `🎲 재굴림 (${this.rerollsLeft})`;
 
+    this.renderTarotSlots();
     this.pickEnemyIntent();
 
     // 5개의 독립된 주사위 각각 굴리기!
@@ -872,6 +1053,11 @@ class DiceSpireGame {
     if (zoneType === 'defense' && hasHolyDefense) {
       total = Math.floor(total * 1.5);
     }
+    if (zoneType === 'attack' && this.tarotBuffs && this.tarotBuffs.attackMultiplier > 1) {
+      const mult = this.tarotBuffs.attackMultiplier;
+      total = Math.floor(total * mult);
+      comboNames.push(`👑여황제 ×${mult}`);
+    }
 
     let desc = `기본 ${baseSum}`;
     if (comboNames.length > 0) desc += ` + [${comboNames.join(', ')}]`;
@@ -957,6 +1143,17 @@ class DiceSpireGame {
 
     if (this.enemyHp <= 0) {
       this.handleVictory();
+      return;
+    }
+
+    // 적 기절(스턴) 확인 (타로 '세계' 발동 시)
+    if (this.enemyStunned) {
+      this.enemyStunned = false;
+      this.battleMessage.textContent = '💫 적이 기절(스턴) 상태여서 이번 턴 행동하지 못했습니다!';
+      this.showFloatingText('행동 불가!', 'heal-number', this.enemyAreaEl);
+      setTimeout(() => {
+        this.startPlayerTurn();
+      }, 1000);
       return;
     }
 
@@ -1193,6 +1390,9 @@ class DiceSpireGame {
       this.rewardOptionsEl.appendChild(cardEl);
     });
 
+    // 보너스 타로 카드 보충 렌더링
+    this.renderTarotRewardSection();
+
     this.nextFloorBtn.onclick = () => {
       if (selectedEssence && selectedTargetDieIdx !== null && selectedSlotIdx !== null) {
         soundEngine.playEnchant();
@@ -1312,11 +1512,135 @@ class DiceSpireGame {
     this.gameOverModal.style.display = 'flex';
   }
 
+  // ==========================================
+  // 소비 아이템: 타로 카드 2칸 렌더링 및 사용
+  // ==========================================
+  renderTarotSlots() {
+    if (!this.tarotSlotsEl) return;
+    this.tarotSlotsEl.innerHTML = '';
+
+    const count = this.tarotInventory.filter(Boolean).length;
+    if (this.tarotCountEl) {
+      this.tarotCountEl.textContent = count;
+    }
+
+    this.tarotInventory.forEach((card, idx) => {
+      const slotEl = document.createElement('div');
+      if (!card) {
+        slotEl.className = 'tarot-slot empty';
+        slotEl.innerHTML = `
+          <span>🎴</span>
+          <span>빈 슬롯</span>
+        `;
+        slotEl.title = `${idx + 1}번 타로 카드 슬롯 (비어있음 - 승리 보상에서 획득 가능)`;
+      } else {
+        slotEl.className = 'tarot-slot occupied';
+        slotEl.innerHTML = `
+          <div class="tarot-slot-num">${card.num}</div>
+          <div class="tarot-slot-body">
+            <span class="tarot-slot-icon">${card.icon}</span>
+            <span class="tarot-slot-name">${card.name}</span>
+          </div>
+          <div class="tarot-slot-use-tag">사용하기</div>
+        `;
+        slotEl.title = `[${card.num}. ${card.name} - ${card.subName}]\n${card.desc}\n(클릭 시 즉시 발동)`;
+
+        slotEl.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.useTarotCard(idx);
+        });
+      }
+      this.tarotSlotsEl.appendChild(slotEl);
+    });
+  }
+
+  useTarotCard(slotIndex) {
+    if (!this.isPlayerTurn || this.isActionLocked) {
+      this.battleMessage.textContent = '지금은 타로 카드를 사용할 수 없습니다!';
+      return;
+    }
+
+    const card = this.tarotInventory[slotIndex];
+    if (!card) return;
+
+    soundEngine.playEnchant();
+    if (typeof particleEngine !== 'undefined' && particleEngine) {
+      const rect = this.tarotSlotsEl.children[slotIndex]?.getBoundingClientRect();
+      if (rect) {
+        particleEngine.spawnMagicBurst(rect.left + rect.width / 2, rect.top + rect.height / 2);
+      }
+    }
+
+    // 카드 효과 실행
+    card.use(this);
+
+    // 1회용 소비 아이템이므로 사용 후 슬롯 비우기
+    this.tarotInventory[slotIndex] = null;
+    this.renderTarotSlots();
+    this.updateStatsUI();
+  }
+
+  // 보상 모달 내 타로 카드 보충 섹션
+  renderTarotRewardSection() {
+    if (!this.tarotRewardSection || !this.tarotRewardOptions) return;
+    this.tarotRewardOptions.innerHTML = '';
+    if (this.tarotRewardFeedback) {
+      const freeSlots = this.tarotInventory.filter(c => !c).length;
+      this.tarotRewardFeedback.textContent = freeSlots > 0
+        ? `남은 타로 슬롯: ${freeSlots}개 (원하는 카드를 클릭하여 획득하세요)`
+        : '타로 슬롯 2개가 모두 차 있습니다 (선택 시 1번 슬롯 카드와 교체됩니다)';
+    }
+
+    // 무작위 타로 카드 2장 제시
+    const allKeys = Object.keys(TAROT_CARDS).sort(() => 0.5 - Math.random()).slice(0, 2);
+    let cardChosen = false;
+
+    allKeys.forEach(k => {
+      const card = TAROT_CARDS[k];
+      const cardEl = document.createElement('div');
+      cardEl.className = 'tarot-reward-card';
+      cardEl.innerHTML = `
+        <div class="card-header">
+          <span class="tarot-card-name">${card.icon} ${card.num}. ${card.name}</span>
+          <span style="font-size: 0.65rem; color: #fbbf24; font-weight:700;">소비 아이템</span>
+        </div>
+        <div class="tarot-card-desc">${card.desc}</div>
+      `;
+
+      cardEl.addEventListener('click', () => {
+        if (cardChosen) return;
+        soundEngine.playEnchant();
+
+        // 빈 슬롯 찾기
+        let targetSlot = this.tarotInventory.findIndex(c => !c);
+        if (targetSlot === -1) {
+          targetSlot = 0;
+        }
+
+        this.tarotInventory[targetSlot] = { ...card };
+        this.renderTarotSlots();
+
+        this.tarotRewardOptions.querySelectorAll('.tarot-reward-card').forEach(c => c.classList.remove('selected'));
+        cardEl.classList.add('selected');
+        cardChosen = true;
+
+        if (this.tarotRewardFeedback) {
+          this.tarotRewardFeedback.textContent = `✨ [${card.name}] 타로 카드를 슬롯에 보관했습니다!`;
+        }
+      });
+
+      this.tarotRewardOptions.appendChild(cardEl);
+    });
+  }
+
   restartGame() {
     this.floor = 1;
     this.gold = 50;
     this.playerHp = this.playerMaxHp;
     this.diceCollection = this.createInitialDiceCollection();
+    this.tarotInventory = [ { ...TAROT_CARDS.fool }, null ];
+    this.tarotBuffs = { attackMultiplier: 1 };
+    this.enemyStunned = false;
     this.gameOverModal.style.display = 'none';
     this.startBattle();
   }
