@@ -1347,7 +1347,7 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  min-height: 180px;
+  min-height: 205px;
   text-align: left;
 }
 
@@ -1388,20 +1388,26 @@ body {
 .reward-card.enchant-frost { border-color: rgba(56, 189, 248, 0.4); }
 .reward-card.enchant-frost:hover { border-color: #38bdf8; box-shadow: 0 12px 24px rgba(0,0,0,0.6), 0 0 18px rgba(56, 189, 248, 0.4); }
 
+.enchant-card-effects {
+  font-size: 0.8rem;
+  margin: 8px 0;
+  line-height: 1.4;
+}
+
 .reward-card-actions {
-  margin-top: 10px;
+  margin-top: 12px;
   display: flex;
   width: 100%;
 }
 
 .reward-card-reroll-btn {
-  background: rgba(245, 158, 11, 0.16);
-  border: 1px solid rgba(245, 158, 11, 0.5);
-  color: #fbbf24;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.22), rgba(180, 83, 9, 0.3));
+  border: 1px solid #f59e0b;
+  color: #fef08a;
   border-radius: var(--radius-sm);
-  padding: 6px 10px;
-  font-size: 0.74rem;
-  font-weight: 700;
+  padding: 8px 12px;
+  font-size: 0.78rem;
+  font-weight: 800;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -1409,14 +1415,15 @@ body {
   gap: 6px;
   transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
   width: 100%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .reward-card-reroll-btn:hover:not(:disabled) {
-  background: rgba(245, 158, 11, 0.35);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.45), rgba(217, 119, 6, 0.55));
   border-color: #fde047;
   color: #ffffff;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.55);
 }
 
 .reward-card-reroll-btn:disabled,

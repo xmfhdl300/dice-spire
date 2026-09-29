@@ -1847,14 +1847,14 @@ class DiceSpireGame {
           <span class="card-title">${opt.enchant.icon} ${opt.enchant.name} ${opt.face}</span>
           <span class="enchant-face-badge">[ 숫자 ${opt.face} 각인 ]</span>
         </div>
-        <div style="font-size: 0.8rem; margin: 8px 0; line-height: 1.4;">
-          <p style="color: #fca5a5;">⚔️ <strong>공격:</strong> ${opt.enchant.attackText}</p>
-          <p style="color: #bae6fd; margin-top: 4px;">🛡️ <strong>방어:</strong> ${opt.enchant.defenseText}</p>
+        <div class="enchant-card-effects">
+          <p class="attack-text" style="color: #fca5a5;">⚔️ <strong>공격:</strong> ${opt.enchant.attackText}</p>
+          <p class="defense-text" style="color: #bae6fd; margin-top: 4px;">🛡️ <strong>방어:</strong> ${opt.enchant.defenseText}</p>
         </div>
         <div class="reward-card-actions">
           <button class="reward-card-reroll-btn ${opt.rerolled ? 'used' : ''}" type="button" ${opt.rerolled ? 'disabled' : ''}>
             <span>${opt.rerolled ? '✓' : '🎲'}</span>
-            <span>${opt.rerolled ? '리롤 완료' : '개별 리롤 (1회)'}</span>
+            <span>${opt.rerolled ? '리롤 완료' : '이 선택지 리롤 (1회)'}</span>
           </button>
         </div>
       `;
@@ -1878,14 +1878,16 @@ class DiceSpireGame {
         // 카드 외관 및 내용 실시간 갱신
         const isSelected = (selectedEssence === opt);
         cardEl.className = `reward-card enchant-card ${opt.enchant.colorClass} ${isSelected ? 'selected-reward' : ''} reroll-pulse`;
-        cardEl.querySelector('.card-header').innerHTML = `
-          <span class="card-title">${opt.enchant.icon} ${opt.enchant.name} ${opt.face}</span>
-          <span class="enchant-face-badge">[ 숫자 ${opt.face} 각인 ]</span>
-        `;
-        cardEl.querySelector('div[style*="font-size: 0.8rem"]').innerHTML = `
-          <p style="color: #fca5a5;">⚔️ <strong>공격:</strong> ${opt.enchant.attackText}</p>
-          <p style="color: #bae6fd; margin-top: 4px;">🛡️ <strong>방어:</strong> ${opt.enchant.defenseText}</p>
-        `;
+
+        const titleEl = cardEl.querySelector('.card-title');
+        const badgeEl = cardEl.querySelector('.enchant-face-badge');
+        const atkEl = cardEl.querySelector('.attack-text');
+        const defEl = cardEl.querySelector('.defense-text');
+
+        if (titleEl) titleEl.textContent = `${opt.enchant.icon} ${opt.enchant.name} ${opt.face}`;
+        if (badgeEl) badgeEl.textContent = `[ 숫자 ${opt.face} 각인 ]`;
+        if (atkEl) atkEl.innerHTML = `⚔️ <strong>공격:</strong> ${opt.enchant.attackText}`;
+        if (defEl) defEl.innerHTML = `🛡️ <strong>방어:</strong> ${opt.enchant.defenseText}`;
 
         rerollBtn.className = 'reward-card-reroll-btn used';
         rerollBtn.disabled = true;
